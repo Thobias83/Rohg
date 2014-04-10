@@ -1,0 +1,70 @@
+/*
+    Rohg
+    Copyright (C) 2014  Ben Rutten
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+body {
+	background-color:black;
+	color: white;
+	font-family: Segoe UI,Arial,sans-serif;
+}
+.inlineBlock {
+	display: inline-block;
+}
+
+.floatLeft {
+	float:left;
+}
+
+#MainContainer {
+	width:100%;
+	text-align:center;
+}
+
+#MainCanvas {
+	border:black solid 1px;
+}
+
+#StatsContainer{
+	height:256px;
+	width:96px;
+	position:fixed;
+	top:0;
+	left:0;
+}
+
+#StatsCanvas{
+	border:white solid 1px;
+}
+
+#Header {
+	height:0px;
+}
+
+table {
+	text-align:center;
+}
+
+td{
+	border:1px solid #FFFFFF;
+}
+
+#Options input {
+	margin-top: 5px;
+}
+
+#Options label {
+	font-weight: bold;
+}

@@ -1,0 +1,9 @@
+837076377 3 (65, 51) -> 2 (104, 30)
+Start: (64, 53)
+End: (111, 29)
+The path oscillates in front of the side that is opposite of the door side of the destination room.
+
+
+Idea:
+When choosing a direction, first try to go the direction you went last time.  If you can go that direction,
+and that direction is closer to the destination, then go that direction.

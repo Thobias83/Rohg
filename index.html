@@ -1,0 +1,93 @@
+<html>
+	<head>
+		<link href="includes/jquery/css/rohgRed-theme/jquery-ui-1.10.4.custom.css" rel="stylesheet">
+		<script src="includes/jquery/js/jquery-1.10.2.js"></script>
+		<script src="includes/jquery/js/jquery-ui-1.10.4.custom.js"></script>
+		<link rel="stylesheet" type="text/css" href="includes/main.css">
+		<script type="text/javascript" src="includes/seedrandom.js"></script>
+		<script type="text/javascript" src="includes/maps.js"></script>
+		<script type="text/javascript" src="includes/player.js"></script>
+		<script type="text/javascript" src="includes/main.js"></script>
+		<title>Rohg</title>
+		<link rel="icon" type="image/png" href="includes/images/benHead128East.png">
+	</head>
+	<body>
+		<div id="Header">
+		</div>
+		<div id="MainContainer">
+			<canvas id="MainCanvas" width="1024" height="576"></canvas>
+		</div>
+		<div id="StatsContainer">
+			<canvas id="StatsCanvas" width="96" height="256"></canvas>
+		</div>
+		<div id="GameMessagesContainer">
+			<fieldset class="inlineBlock" id="GameMessagesFieldset">
+				<legend>Game Messages</legend>
+				<div id="GameMessages">
+					<label> Current Room:
+						<span id="CurrentRoomIndex" ></span>
+					</label>
+				</div>
+			</fieldset>
+		</div>
+		<div id="OptionsContainer">
+			<fieldset class="inlineBlock" id="MapOptionsFieldset">
+				<legend>Map Options</legend>
+				<div id="Options">
+					<label> Scale:
+						<select id="ScaleSelect"></select>
+					</label>
+					<div></div>
+					<label> Avoid Diagonal:
+						<input type="checkbox" id="AvoidDiagonal" checked=true />
+					</label>
+					<div></div>
+					<label> Multi-Thread Map Creation:
+						<input type="checkbox" id="MultiThreadMapCreation" />
+					</label>
+					<div></div>
+					<label> Seed:
+						<input type="text" id="SeedSelect" />
+					</label>
+					<button id="RegenerateMap">Regenerate Map</button>
+					<button id="GenerateRandomMap">Generate Random Map</button>
+				</div>
+			</fieldset>
+		</div>
+		<div id="DebugContainer">
+			<fieldset class="floatLeft" id="MapInfoFieldset">
+				<legend>Map Info</legend>
+				<div>Seed: <span id="Seed"/></div>
+				<div id="NumberOfRoomsContainer">Number of rooms created: <span id="NumberOfRooms"/></div>
+				<div id="ActualNumberOfRoomsContainer">Actual number of rooms placed: <span id="ActualNumberOfRooms"/></div>
+			</fieldset>
+			<fieldset id="RoomInfo" class="floatLeft">
+				<legend>Room Info</legend>
+				<table>
+					<thead>
+						<tr>
+							<th>RoomId</th>
+							<th>Position</th>
+						</tr>
+					</thead>
+					<tbody id="RoomData">
+					</tbody>
+				</table>
+			</fieldset>
+			<fieldset id="CorridorInfo" class="floatLeft">
+				<legend>Corridor Info</legend>
+				<table>
+					<thead>
+						<tr>
+							<th>Starting RoomId</th>
+							<th>Ending RoomId</th>
+							<th>Length</th>
+						</tr>
+					</thead>
+					<tbody id="CorridorData">
+					</tbody>
+				</table>
+			</fieldset>
+		</div>
+	</body>
+</html>
