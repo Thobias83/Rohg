@@ -39,6 +39,7 @@ var Rohg = new function () {
 	var DEBUG = true;
 	var MAX_MAP_SCALE = 64;
 	var MIN_MAP_SCALE = 4;
+	var UNLIMITED_SIGHT = false;
 	
 	/*
 		Textures
@@ -217,6 +218,17 @@ var Rohg = new function () {
 			result[i] = [];
 			for (var j = 0; j < _map[i].length; j++) {
 				result[i][j] = false;
+			}
+		}
+		
+		// Check everything
+		if (UNLIMITED_SIGHT) {
+			for (var i = 0; i < MAP_TILE_WIDTH; i++) {
+				for (var j = 0; j < MAP_TILE_HEIGHT; j++) {
+					if (!obstructionExistsBetween({x:x,y:y}, {x:i,y:j})) {
+						result[i][j] = true;
+					}
+				}
 			}
 		}
 		
@@ -650,6 +662,7 @@ var Rohg = new function () {
 		_player.Move(MAP_TILE_WIDTH / 2,MAP_TILE_HEIGHT / 2);
 		buildShroudedMap();
 		resetDiscoveredRooms();
+		buildCanSeeIndex();
 		_statFloor++;
 	};
 	
