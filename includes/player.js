@@ -47,7 +47,8 @@ var Player = new function () {
 	var ACTION_TYPE = {
 		MOVE:0,
 		OPEN_DOOR:1,
-		CLOSE_DOOR:2
+		CLOSE_DOOR:2,
+		KICK:3
 	};
 	var EFFECTS = {
 		DOUBLE_STRENGTH:0,
@@ -113,6 +114,9 @@ var Player = new function () {
 				break;
 			case ACTION_TYPE.CLOSE_DOOR:
 				addMessage(this, "Closing...")
+				break;
+			case ACTION_TYPE.KICK:
+				addMessage(this, "Kicking...")
 				break;
 		}
 		this.nextAction = nextAction;

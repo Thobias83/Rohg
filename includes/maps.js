@@ -21,6 +21,7 @@ var Maps = new function () {
 	Variables
 	**********************************************************************************/
 	var ROOM_PROX_RADIUS = 4;
+	var STUCK_DOOR_CHANCE = .25;
 	var SORT_BY_AREA = false;
 	var AVOID_DIAGONAL = true;
 	var _map = [];
@@ -277,19 +278,27 @@ var Maps = new function () {
 		
 		reportCorridor(startRoom, endRoom, currentPath);
 		
-		startRoom.doors.push({
-			x:startingPoint.x,
-			y:startingPoint.y,
-			isOpen:false
-		});
-		endRoom.doors.push({
-			x:endingPoint.x,
-			y:endingPoint.y,
-			isOpen:false
-		});
+		startRoom.doors.push(getNewDoor(startingPoint.x,startingPoint.y));
+		endRoom.doors.push(getNewDoor(endingPoint.x,endingPoint.y));
+		
 		carvePathway(currentPath);
 		placeClosedDoor(startingPoint);
 		placeClosedDoor(endingPoint);
+	};
+	
+	var getNewDoor = function (x,y) {
+		var isStuck = false;
+		
+		if (Math.random() < STUCK_DOOR_CHANCE) {
+			isStuck = true;
+		};
+		
+		return {
+			x:x,
+			y:y,
+			isOpen:false,
+			isStuck:isStuck
+		};
 	};
 	
 	var placeClosedDoor = function (point) {

@@ -75,8 +75,11 @@ var Rohg = new function () {
 	/*
 		Sounds
 	*/
-	var _sound_doorOpen = new Audio("includes/sounds/openDoor2.ogg");
-	var _sound_doorClose = new Audio("includes/sounds/closeDoor.ogg");
+	var SOUND_DOOR_KICK_SUCCESS = "includes/sounds/doorKickSuccess.ogg";
+	var SOUND_DOOR_KICK_FAIL = "includes/sounds/doorKickFail.ogg";
+	var SOUND_DOOR_CLOSE = "includes/sounds/closeDoor.ogg";
+	var SOUND_DOOR_OPEN = "includes/sounds/openDoor2.ogg";
+	var SOUND_DOOR_STUCK = "includes/sounds/doorStuck.ogg";
 	
 	/*
 		Enums
@@ -119,7 +122,8 @@ var Rohg = new function () {
 	var ACTION_TYPE = {
 		MOVE:0,
 		OPEN_DOOR:1,
-		CLOSE_DOOR:2
+		CLOSE_DOOR:2,
+		KICK:3
 	};
 	var EFFECTS = {
 		DOUBLE_STRENGTH:0,
@@ -608,6 +612,13 @@ var Rohg = new function () {
 					debug_doubleIntelligence();
 				}
 				break;
+			case 75: 
+				if (shiftKey) { // K
+					
+				} else { // k
+					setKick();
+				}
+				break;
 			default:
 				break;		
 		}
@@ -615,14 +626,17 @@ var Rohg = new function () {
 	
 	var debug_doubleStrength = function () {
 		_player.AddEffect(EFFECTS.DOUBLE_STRENGTH, 5);
+		_player.TakeTurn();
 	};
 	
 	var debug_doubleAgility = function () {
 		_player.AddEffect(EFFECTS.DOUBLE_AGILITY, 5);
+		_player.TakeTurn();
 	};
 	
 	var debug_doubleIntelligence = function () {
 		_player.AddEffect(EFFECTS.DOUBLE_INTELLIGENCE, 5);
+		_player.TakeTurn();
 	};
 
 	var setCloseDoor = function () {
@@ -631,6 +645,10 @@ var Rohg = new function () {
 
 	var setOpenDoor = function () {
 		_player.SetAction(ACTION_TYPE.OPEN_DOOR);
+	};
+	
+	var setKick = function () {
+		_player.SetAction(ACTION_TYPE.KICK);
 	};
 	
 	var player_moveUp = function () {
@@ -703,6 +721,7 @@ var Rohg = new function () {
 	
 	var movePlayer = function (x,y) {
 		var door = getDoor(x,y);
+		var sound;
 		door = door || -1;
 		
 		if (!playerCanMove(x,y)) {
@@ -710,17 +729,48 @@ var Rohg = new function () {
 			return;
 		}
 		
+		// If the space being moved to is a door
 		if (door != -1) {
+			// The door is open and the player's next action is to close it
 			if (door.isOpen && _player.nextAction == ACTION_TYPE.CLOSE_DOOR) {
 				closeDoor(door);
 				return;
 			}
 			
+			// The door is closed and the player's next action is to open it
 			if (!door.isOpen && _player.nextAction === ACTION_TYPE.OPEN_DOOR) {
-				openDoor(door);
+				log(door.isStuck);
+				// If the door isn't stuck
+				if (!door.isStuck) {
+					sound = new Audio(SOUND_DOOR_OPEN);
+					sound.play();
+					openDoor(door, "The door opens.");
+					return;
+				}
+				
+				//The door is stuck
+				sound = new Audio(SOUND_DOOR_STUCK);
+				sound.play();
+				_player.TakeTurn("The door is stuck!");
 				return;
 			}
 			
+			// The door is closed and the player's next action is to kick the door down
+			if (!door.isOpen && _player.nextAction === ACTION_TYPE.KICK) {
+				if (Math.random() > 0.80) {
+					sound = new Audio(SOUND_DOOR_KICK_SUCCESS);
+					sound.play();
+					openDoor(door, "You crash through the door!");
+					return;
+				}
+				
+				sound = new Audio(SOUND_DOOR_KICK_FAIL);
+				sound.play();
+				_player.TakeTurn("WHAM!");
+				return;
+			}
+			
+			// The door is closed and the player's next action is to move
 			if (!door.isOpen) {
 				_player.TakeTurn("The door is closed.");
 				return;
@@ -745,19 +795,20 @@ var Rohg = new function () {
 		drawScreen();
 	};
 	
-	var openDoor = function (door) {
-		_sound_doorOpen.play();
+	var openDoor = function (door,message) {
 		door.isOpen = true;
+		door.isStuck = false;
 		_map[door.x][door.y] = CELL_TYPE.DOOR_OPEN;
 		_shroudedMap[door.x][door.y] = CELL_TYPE.DOOR_OPEN;
 		unshroudRoomByLocation(door.x,door.y);
 		statsRegisterRoom(_roomIndex[door.x][door.y]);
 		buildCanSeeIndex();
-		_player.TakeTurn("The door opens.");
+		_player.TakeTurn(message);
 	};
 	
 	var closeDoor = function (door) {
-		_sound_doorClose.play();
+		var sound = new Audio(SOUND_DOOR_CLOSE);
+		sound.play();
 		door.isOpen = false;
 		_map[door.x][door.y] = CELL_TYPE.DOOR_CLOSED;
 		_shroudedMap[door.x][door.y] = CELL_TYPE.DOOR_CLOSED;
@@ -788,6 +839,7 @@ var Rohg = new function () {
 		resetDiscoveredRooms();
 		buildCanSeeIndex();
 		_statFloor++;
+		drawScreen();
 	};
 	
 	var goUp = function () {
