@@ -5,6 +5,7 @@
 		<script src="includes/jquery/js/jquery-ui-1.10.4.custom.js"></script>
 		<link rel="stylesheet" type="text/css" href="includes/main.css">
 		<script type="text/javascript" src="includes/seedrandom.js"></script>
+		<script type="text/javascript" src="includes/log.js"></script>
 		<script type="text/javascript" src="includes/maps.js"></script>
 		<script type="text/javascript" src="includes/player.js"></script>
 		<script type="text/javascript" src="includes/main.js"></script>
@@ -17,10 +18,13 @@
 		<div id="MainContainer">
 			<canvas id="MainCanvas" width="1024" height="576"></canvas>
 		</div>
+		<div id="LogContainer">
+			<canvas id="LogCanvas" width="256" height="100"></canvas>
+		</div>
 		<div id="StatsContainer">
 			<canvas id="StatsCanvas" width="96" height="256"></canvas>
 		</div>
-		<div>
+		<div id="KeysContainer">
 			<fieldset class="inlineBlock" id="GameInstructionsFieldset">
 				<legend>Keys</legend>
 				<table>
@@ -32,34 +36,38 @@
 					</thead>
 					<tbody>
 						<tr>
-							<td>W</td>
-							<td>Move Up</td>
+							<td>w</td>
+							<td>Move up</td>
 						<tr>
 						<tr>
-							<td>A</td>
-							<td>Move Left</td>
+							<td>a</td>
+							<td>Move left</td>
 						<tr>
 						<tr>
-							<td>S</td>
-							<td>Move Down</td>
+							<td>s</td>
+							<td>Move down</td>
 						<tr>
 						<tr>
-							<td>D</td>
-							<td>Move Right</td>
+							<td>d</td>
+							<td>Move right</td>
 						<tr>
 						<tr>
-							<td>O</td>
-							<td>Open Door</td>
+							<td>o</td>
+							<td>Open door</td>
 						<tr>
 						<tr>
-							<td>C</td>
-							<td>Close Door</td>
+							<td>c</td>
+							<td>Close door</td>
+						<tr>
+						<tr>
+							<td>></td>
+							<td>Go down stairs</td>
 						<tr>
 					</tbody>
 				</table>	
 			</fieldset>
 		</div>
-		<div id="GameMessagesContainer">
+		<div class="hidden" id="GameMessagesContainer">
 			<fieldset class="inlineBlock" id="GameMessagesFieldset">
 				<legend>Game Messages</legend>
 				<div id="GameMessages">
@@ -69,7 +77,7 @@
 				</div>
 			</fieldset>
 		</div>
-		<div id="OptionsContainer">
+		<div class="hidden"  id="OptionsContainer">
 			<fieldset class="inlineBlock" id="MapOptionsFieldset">
 				<legend>Map Options</legend>
 				<div id="Options">
@@ -93,7 +101,7 @@
 				</div>
 			</fieldset>
 		</div>
-		<div id="DebugContainer">
+		<div class="hidden"  id="DebugContainer">
 			<fieldset class="floatLeft" id="MapInfoFieldset">
 				<legend>Map Info</legend>
 				<div>Seed: <span id="Seed"/></div>

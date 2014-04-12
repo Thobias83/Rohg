@@ -28,9 +28,16 @@ body {
 	float:left;
 }
 
+.hidden {
+	display:none;
+}
+
 #MainContainer {
-	width:100%;
-	text-align:center;
+	/*width:100%;
+	text-align:center;*/
+	height:576px;
+	width:1024px;
+	position:fixed;
 }
 
 #MainCanvas {
@@ -41,16 +48,28 @@ body {
 	height:256px;
 	width:96px;
 	position:fixed;
-	top:0;
-	left:0;
+}
+
+#LogContainer{
+	height:96px;
+	width:256px;
+	position:fixed;
 }
 
 #StatsCanvas{
 	border:white solid 1px;
 }
 
+#LogCanvas{
+	border:white solid 1px;
+}
+
 #Header {
 	height:0px;
+}
+
+#KeysContainer {
+	float: right;
 }
 
 table {

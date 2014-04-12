@@ -65,9 +65,12 @@ var Rohg = new function () {
 	var WALL_IMAGE_SRC = "includes/images/floorTile1.png";
 	var WALL_IMAGE = new Image();
 	WALL_IMAGE.src = WALL_IMAGE_SRC;
-	var STAIRS_DOWN_IMAGE_SRC = "includes/images/floorTile3.png";
+	var STAIRS_DOWN_IMAGE_SRC = "includes/images/stairsDown.png";
 	var STAIRS_DOWN_IMAGE = new Image();
 	STAIRS_DOWN_IMAGE.src = STAIRS_DOWN_IMAGE_SRC;
+	var STAIRS_UP_IMAGE_SRC = "includes/images/stairsUp.png";
+	var STAIRS_UP_IMAGE = new Image();
+	STAIRS_UP_IMAGE.src = STAIRS_UP_IMAGE_SRC;
 	
 	/*
 		Sounds
@@ -158,6 +161,7 @@ var Rohg = new function () {
 		uiInit();
 		populateOptions();
 		setContext();
+		initLog();
 		initMap();	
 		initPlayer();
 		bindEvents();
@@ -338,10 +342,20 @@ var Rohg = new function () {
 		return false;
 	};
 	
+	var initLog = function () {
+		Log.Init();
+	};
+	
 	var uiInit = function () {
+		var centerY = (window.innerHeight - CANVAS_HEIGHT) / 2;
+		var centerX = (window.innerWidth - CANVAS_WIDTH) / 2;
+		var statsCenterY = (window.innerHeight - STATS_CANVAS_HEIGHT) / 2;
+		
 		$("#RegenerateMap").button();
 		$("#GenerateRandomMap").button();
+		$("#MainContainer").css("top", centerY).css("left", centerX);
 		$("#StatsContainer").draggable();
+		$("#StatsContainer").css("top", statsCenterY).css("left", 1);
 	};
 	
 	var populateOptions = function () {
@@ -446,7 +460,7 @@ var Rohg = new function () {
 	
 	var bindEvents = function () {
 		$("body").keydown(keyDown);
-		$("#MainCanvas").click(carveSpace);
+		//$("#MainCanvas").click(carveSpace);
 		$("#RegenerateMap").click(regenerateMap);
 		$("#GenerateRandomMap").click(generateRandomMap);
 		$("#MultiThreadMapCreation").change(setMultiThreadMapGeneration);
@@ -493,8 +507,13 @@ var Rohg = new function () {
 	
 	var keyDown = function (event) {
 		var keyPressed = event.keyCode;
+		var shiftKey = event.shiftKey;
 		
-		log(keyPressed);
+		if (shiftKey ==1) {
+			shiftKey = true;
+		}
+		
+		log(keyPressed + " " + shiftKey);
 		
 		switch (keyPressed) {
 			case 87:
@@ -514,6 +533,16 @@ var Rohg = new function () {
 				break;
 			case 79: // o
 				setOpenDoor();
+				break;
+			case 190: // .
+				if (shiftKey) { // >
+					tryGoDown();
+				}
+				break;
+			case 188: // ,
+				if (shiftKey) { // <
+					tryGoUp();
+				}
 				break;
 			default:
 				break;		
@@ -546,6 +575,22 @@ var Rohg = new function () {
 		PLAYER_IMAGE_SRC = "includes/images/benHead128East.png";
 		PLAYER_IMAGE.src = PLAYER_IMAGE_SRC;
 		movePlayer(_player.x + 1, _player.y);
+	};
+	
+	var tryGoDown = function () {
+		if (_map[_player.x][_player.y] != CELL_TYPE.STAIRS_DOWN) {
+			_player.TakeTurn("There are no down stairs here.");
+			return;
+		};
+		goDown();
+	};
+	
+	var tryGoUp = function () {
+		if (_map[_player.x][_player.y] != CELL_TYPE.STAIRS_Up) {
+			_player.TakeTurn("There are no up stairs here.");
+			return;
+		};
+		goUp();
 	};
 	
 	var setContext = function () {
@@ -601,11 +646,12 @@ var Rohg = new function () {
 			}
 			
 			if (!door.isOpen) {
-				_player.TakeTurn();
+				_player.TakeTurn("The door is closed.");
 				return;
 			}
 		}
 		
+		// The player can Move
 		_player.Move(x,y);
 		buildCanSeeIndex();
 		
@@ -613,7 +659,7 @@ var Rohg = new function () {
 		_shroudedMap[x][y] = _map[x][y];
 		
 		if (isDownStairs(x,y)) {
-			goDown();
+			_player.Log("You see a stairway leading down.");
 		// } else if (isRoom(x,y)){
 			// unshroudRoomByLocation(x,y);
 			// statsRegisterRoom(_roomIndex[x][y]);
@@ -630,7 +676,7 @@ var Rohg = new function () {
 		unshroudRoomByLocation(door.x,door.y);
 		statsRegisterRoom(_roomIndex[door.x][door.y]);
 		buildCanSeeIndex();
-		_player.TakeTurn();
+		_player.TakeTurn("The door opens.");
 	};
 	
 	var closeDoor = function (door) {
@@ -639,7 +685,7 @@ var Rohg = new function () {
 		_map[door.x][door.y] = CELL_TYPE.DOOR_CLOSED;
 		_shroudedMap[door.x][door.y] = CELL_TYPE.DOOR_CLOSED;
 		buildCanSeeIndex();
-		_player.TakeTurn();
+		_player.TakeTurn("The door closes.");
 	};
 	
 	var getDoor = function (x,y) {
@@ -658,12 +704,17 @@ var Rohg = new function () {
 	};
 	
 	var goDown = function () {
+		_player.Log("Going down...");
 		initMap();
 		_player.Move(MAP_TILE_WIDTH / 2,MAP_TILE_HEIGHT / 2);
 		buildShroudedMap();
 		resetDiscoveredRooms();
 		buildCanSeeIndex();
 		_statFloor++;
+	};
+	
+	var goUp = function () {
+		
 	};
 	
 	var isDownStairs = function (x,y) {
@@ -751,7 +802,7 @@ var Rohg = new function () {
 						break;
 						
 					case CELL_TYPE.STAIRS_UP:
-						fill(i,j,COLORS.Red);
+						fillImage(i,j,STAIRS_UP_IMAGE);
 						break;
 						
 					case CELL_TYPE.PLAYER_SPAWN:

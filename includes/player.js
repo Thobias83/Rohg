@@ -69,6 +69,7 @@ var Player = new function () {
 			turn:0,
 			nextAction:ACTION_TYPE.MOVE,
 			SetAction:ôsetAction,
+			Log:ôlog,
 			TakeTurn:ôtakeTurn,
 			Move:ômove,
 			MaxHealth: ôgetMaxHealth,
@@ -81,7 +82,21 @@ var Player = new function () {
 	/*
 		Member functions
 	*/
+	var ôlog = function (messageText) {
+		addMessage(this, messageText);
+	};
+	
 	var ôsetAction = function (nextAction) {
+		switch (nextAction) {
+			case ACTION_TYPE.MOVE:
+				break;
+			case ACTION_TYPE.OPEN_DOOR:
+				addMessage(this, "Opening...")
+				break;
+			case ACTION_TYPE.CLOSE_DOOR:
+				addMessage(this, "Closing...")
+				break;
+		}
 		this.nextAction = nextAction;
 	};
 	
@@ -101,11 +116,18 @@ var Player = new function () {
 		return getMaxMana(this);
 	};
 	
-	var ôtakeTurn = function () {
+	var ôtakeTurn = function (messageText) {
+		if (messageText != undefined) {
+			addMessage(this,messageText);
+		}
+		
 		takeTurn(this);
 	};
 	
-	var ômove = function (x,y) {
+	var ômove = function (x,y, messageText) {
+		if (messageText != undefined) {
+			addMessage(this,messageText);
+		}
 		this.x = x;
 		this.y = y;
 		takeTurn(this);
@@ -114,6 +136,10 @@ var Player = new function () {
 	/*
 		Private functions
 	*/
+	var addMessage = function (player, messageText) {
+		Log.AddMessage(messageText,player.turn);
+	};
+	
 	var takeTurn = function (player) {
 		player.turn++;
 		player.nextAction = ACTION_TYPE.MOVE;
