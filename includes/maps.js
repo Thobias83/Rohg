@@ -155,10 +155,10 @@ var Maps = new function () {
 	var setRooms = function () {
 		var widthVariant, heightVariant, minWidth, minHeight, width, height;
 		
-		minWidth = 5;
-		widthVariant = _width * .1;
-		minHeight = 5;
-		heightVariant = _height * .15;
+		minWidth = 3;
+		widthVariant = _width * .2;
+		minHeight = 3;
+		heightVariant = _height * .2;
 		
 		for (var i = 0; i < _numberOfRooms; i++) {
 			width = Math.floor(Math.random() * widthVariant) + minWidth;

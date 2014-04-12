@@ -42,6 +42,11 @@ var Player = new function () {
 		SOUTH:2,
 		WEST:3
 	};
+	var ACTION_TYPE = {
+		MOVE:0,
+		OPEN_DOOR:1,
+		CLOSE_DOOR:2
+	};
 	
 	
 	/*
@@ -61,7 +66,10 @@ var Player = new function () {
 			lightRadius:lightRadius,
 			currentHealth:currentHealth,
 			currentMana:currentMana,
-			Foo:ôfoo,
+			turn:0,
+			nextAction:ACTION_TYPE.MOVE,
+			SetAction:ôsetAction,
+			TakeTurn:ôtakeTurn,
 			Move:ômove,
 			MaxHealth: ôgetMaxHealth,
 			MaxMana: ôgetMaxMana,
@@ -73,6 +81,10 @@ var Player = new function () {
 	/*
 		Member functions
 	*/
+	var ôsetAction = function (nextAction) {
+		this.nextAction = nextAction;
+	};
+	
 	var ôgetItems = function () {
 		return _items;
 	};
@@ -89,18 +101,24 @@ var Player = new function () {
 		return getMaxMana(this);
 	};
 	
-	var ôfoo = function () {
-		return getArmor(this);
+	var ôtakeTurn = function () {
+		takeTurn(this);
 	};
 	
 	var ômove = function (x,y) {
 		this.x = x;
 		this.y = y;
+		takeTurn(this);
 	};
 	
 	/*
 		Private functions
 	*/
+	var takeTurn = function (player) {
+		player.turn++;
+		player.nextAction = ACTION_TYPE.MOVE;
+	};
+	
 	var getNewInv = function () {
 		return {
 			items:[]

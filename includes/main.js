@@ -36,7 +36,7 @@ var Rohg = new function () {
 	var MAP_SCALE_FACTOR = 16;
 	var MAX_SCREEN_TICK = 10000;
 	var FPS = 15;
-	var DEBUG = false;
+	var DEBUG = true;
 	var MAX_MAP_SCALE = 64;
 	var MIN_MAP_SCALE = 4;
 	
@@ -58,12 +58,21 @@ var Rohg = new function () {
 	var DOOR_CLOSED_IMAGE_SRC = "includes/images/doorClosed.png";
 	var DOOR_CLOSED_IMAGE = new Image();
 	DOOR_CLOSED_IMAGE.src = DOOR_CLOSED_IMAGE_SRC;
+	var DOOR_OPEN_IMAGE_SRC = "includes/images/doorOpen.png";
+	var DOOR_OPEN_IMAGE = new Image();
+	DOOR_OPEN_IMAGE.src = DOOR_OPEN_IMAGE_SRC;
 	var WALL_IMAGE_SRC = "includes/images/floorTile1.png";
 	var WALL_IMAGE = new Image();
 	WALL_IMAGE.src = WALL_IMAGE_SRC;
 	var STAIRS_DOWN_IMAGE_SRC = "includes/images/floorTile3.png";
 	var STAIRS_DOWN_IMAGE = new Image();
 	STAIRS_DOWN_IMAGE.src = STAIRS_DOWN_IMAGE_SRC;
+	
+	/*
+		Sounds
+	*/
+	var _sound_doorOpen = new Audio("includes/sounds/openDoor2.ogg");
+	var _sound_doorClose = new Audio("includes/sounds/closeDoor.ogg");
 	
 	/*
 		Enums
@@ -88,6 +97,9 @@ var Rohg = new function () {
 		DarkRed : "rgb(136,0,0)",
 		DarkBlue : "rgb(0,0,136)"
 	};
+	var COLORS_TRANS = {
+		Black: "rgba(0,0,0,0.666)"
+	};
 	var CELL_TYPE = {
 		ROOM_FLOOR:0,
 		CORRIDOR_FLOOR:1,
@@ -99,6 +111,11 @@ var Rohg = new function () {
 		PLAYER_SPAWN:7,
 		DOOR_OPEN:8,
 		UNDISCOVERED:9
+	};
+	var ACTION_TYPE = {
+		MOVE:0,
+		OPEN_DOOR:1,
+		CLOSE_DOOR:2
 	};
 	
 	/*
@@ -116,6 +133,8 @@ var Rohg = new function () {
 	var _rooms;
 	var _seed;
 	var _roomIndex;
+	var _doorIndex; // {roomIndex, doorIndex}
+	var _canSeeIndex;
 	var _statNumberOfRooms;
 	var _statFloor;
 	var _statDiscoveredRooms;
@@ -151,14 +170,17 @@ var Rohg = new function () {
 	/*
 		Private functions
 	*/
-	var buildRoomIndex = function () {
+	var buildRoomAndDoorIndex = function () {
 		var result = [];
+		var doorResult = [];
 		
 		// initialize the array
 		for (var i = 0; i < _map.length; i++) {
 			result[i] = [];
+			doorResult[i] = [];
 			for (var j = 0; j < _map[i].length; j++) {
 				result[i][j] = -1;
+				doorResult[i][j] = -1;
 			}
 		}
 		
@@ -173,10 +195,135 @@ var Rohg = new function () {
 			// add the doors in the room
 			for (var i = 0; i < _rooms[roomIndex].doors.length; i++) {
 				result[_rooms[roomIndex].doors[i].x][_rooms[roomIndex].doors[i].y] = roomIndex;
+				doorResult[_rooms[roomIndex].doors[i].x][_rooms[roomIndex].doors[i].y] = {roomIndex:roomIndex, doorIndex:i};
 			}
 		}
 		
 		_roomIndex = result;
+		_doorIndex = doorResult;
+	};
+	
+	var buildCanSeeIndex = function () {
+		var result = [];
+		var radius = _player.lightRadius;
+		var x = _player.x;
+		var y = _player.y;
+		var room = _roomIndex[x][y];
+		var roomX, roomY, roomWidth, roomHeight;
+		var doorPoint;
+		
+		// initialize the array
+		for (var i = 0; i < _map.length; i++) {
+			result[i] = [];
+			for (var j = 0; j < _map[i].length; j++) {
+				result[i][j] = false;
+			}
+		}
+		
+		// Check the player's light radius
+		for (var i = x - radius; i <= x + radius; i++) {
+			for (var j = y - radius; j <= y + radius; j++) {
+				if (!obstructionExistsBetween({x:x,y:y}, {x:i,y:j})) {
+					result[i][j] = true;
+				}
+			}
+		}
+		
+		// If in a room, check the whole room
+		if (room != -1) {
+			roomX = _rooms[room].x;
+			roomY = _rooms[room].y;
+			roomWidth = _rooms[room].width;
+			roomHeight = _rooms[room].height;
+			
+			for (var i = roomX; i < roomX + roomWidth; i++) {
+				for (var j = roomY; j < roomY + roomHeight; j++) {
+					if (!obstructionExistsBetween({x:x,y:y}, {x:i,y:j})) {
+						result[i][j] = true;
+					}
+				}
+			}
+		} 
+		// Else check if there are any doors in sight
+		for (var i = 0; i < _rooms.length; i++) {
+			for (var j = 0; j < _rooms[i].doors.length; j++) {
+				doorPoint = {x:_rooms[i].doors[j].x, y:_rooms[i].doors[j].y};
+				if (i != room && !obstructionExistsBetween({x:x,y:y}, doorPoint)) { // if the player can see the door and its not in the same room
+					roomX = _rooms[i].x;
+					roomY = _rooms[i].y;
+					roomWidth = _rooms[i].width;
+					roomHeight = _rooms[i].height;
+					
+					for (var a = roomX; a < roomX + roomWidth; a++) {
+						for (var b = roomY; b < roomY + roomHeight; b++) {
+							if (!obstructionExistsBetween({x:x,y:y}, {x:a,y:b}, true, i)) {
+								result[a][b] = true;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		_canSeeIndex = result;
+	};
+	
+	var isCornerOfRoom = function (point, roomIndex) {
+		var roomX, roomY, roomWidth, roomHeight;
+		roomX = _rooms[roomIndex].x;
+		roomY = _rooms[roomIndex].y;
+		roomWidth = _rooms[roomIndex].width;
+		roomHeight = _rooms[roomIndex].height;
+		
+		// Top left
+		if (point.x === roomX - 1 && point.y === roomY - 1) {
+			return true;
+		}
+		
+		// Top right
+		if (point.x === roomX + roomWidth && point.y === roomY - 1) {
+			return true;
+		}
+		
+		// Bottom right
+		if (point.x === roomX + roomWidth && point.y === roomY + roomHeight) {
+			return true;
+		}
+		
+		// Bottom left
+		if (point.x === roomX - 1 && point.y === roomY + roomHeight) {
+			return true;
+		}
+		
+		return false;
+	};
+	
+	var obstructionExistsBetween = function (a,b, checkCorners, roomIndex) {
+		var x1 = a.x;
+		var y1 = a.y;
+		var x0 = b.x;
+		var y0 = b.y;
+		
+		checkCorners = checkCorners || false;
+		
+		var dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+		var dy = Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1; 
+		var err = (dx>dy ? dx : -dy)/2;
+
+		while (true) {
+			if (_map[x0][y0] === CELL_TYPE.WALL || _map[x0][y0] === CELL_TYPE.ROOM_WALL || _map[x0][y0] === CELL_TYPE.DOOR_CLOSED) {
+				return true;
+			}
+			if (checkCorners && isCornerOfRoom({x:x0,y:y0},roomIndex)) {
+				return true;
+			}
+			if (x0 === x1 && y0 === y1) break;
+			var e2 = err;
+			if (e2 > -dx) { err -= dy; x0 += sx; }
+			if (e2 < dy) { err += dx; y0 += sy; }
+		}
+		
+		return false;
 	};
 	
 	var uiInit = function () {
@@ -228,7 +375,7 @@ var Rohg = new function () {
 			$("#SeedSelect").val(_seed);
 		}
 		
-		buildRoomIndex();
+		buildRoomAndDoorIndex();
 	};
 	
 	var buildShroudedMap = function () {
@@ -271,6 +418,7 @@ var Rohg = new function () {
 
 		resetStats();
 		buildShroudedMap();
+		buildCanSeeIndex();
 	};
 	
 	var resetStats = function () {
@@ -349,11 +497,25 @@ var Rohg = new function () {
 			case 68:
 				player_moveRight();
 				break;
+			case 67: // c
+				setCloseDoor();
+				break;
+			case 79: // o
+				setOpenDoor();
+				break;
 			default:
 				break;		
 		}
 	};
 
+	var setCloseDoor = function () {
+		_player.SetAction(ACTION_TYPE.CLOSE_DOOR);
+	};
+
+	var setOpenDoor = function () {
+		_player.SetAction(ACTION_TYPE.OPEN_DOOR);
+	};
+	
 	var player_moveUp = function () {
 		movePlayer(_player.x, _player.y - 1);
 	};
@@ -393,31 +555,94 @@ var Rohg = new function () {
 		drawEnemies();
 		drawProjectiles();
 		drawPlayer();
+		drawVisionShroud();
 	};
 	
-	var drawDiscoveredArea = function () {
-		
+	var drawVisionShroud = function () {
+		for (var i = 0; i < MAP_TILE_WIDTH; i++) {
+			for (var j = 0; j < MAP_TILE_HEIGHT; j++) {
+				if (!_canSeeIndex[i][j]) {
+					fill(i,j,COLORS_TRANS.Black);
+				}
+			}
+		}
 	};
 	
 	var movePlayer = function (x,y) {
+		var door = getDoor(x,y);
+		door = door || -1;
 		
 		if (!playerCanMove(x,y)) {
+			_player.TakeTurn();
 			return;
 		}
 		
+		if (door != -1) {
+			if (door.isOpen && _player.nextAction == ACTION_TYPE.CLOSE_DOOR) {
+				closeDoor(door);
+				return;
+			}
+			
+			if (!door.isOpen && _player.nextAction === ACTION_TYPE.OPEN_DOOR) {
+				openDoor(door);
+				return;
+			}
+			
+			if (!door.isOpen) {
+				_player.TakeTurn();
+				return;
+			}
+		}
+		
 		_player.Move(x,y);
+		buildCanSeeIndex();
 		
 		$("#CurrentRoomIndex").text(_roomIndex[x][y]);
 		_shroudedMap[x][y] = _map[x][y];
 		
 		if (isDownStairs(x,y)) {
 			goDown();
-		} else if (isRoom(x,y)){
-			unshroudRoomByLocation(x,y);
-			statsRegisterRoom(_roomIndex[x][y]);
+		// } else if (isRoom(x,y)){
+			// unshroudRoomByLocation(x,y);
+			// statsRegisterRoom(_roomIndex[x][y]);
 		} else {
 			unshroudPlayerLightRadius(x,y);
 		}
+	};
+	
+	var openDoor = function (door) {
+		_sound_doorOpen.play();
+		door.isOpen = true;
+		_map[door.x][door.y] = CELL_TYPE.DOOR_OPEN;
+		_shroudedMap[door.x][door.y] = CELL_TYPE.DOOR_OPEN;
+		unshroudRoomByLocation(door.x,door.y);
+		statsRegisterRoom(_roomIndex[door.x][door.y]);
+		buildCanSeeIndex();
+		_player.TakeTurn();
+	};
+	
+	var closeDoor = function (door) {
+		_sound_doorClose.play();
+		door.isOpen = false;
+		_map[door.x][door.y] = CELL_TYPE.DOOR_CLOSED;
+		_shroudedMap[door.x][door.y] = CELL_TYPE.DOOR_CLOSED;
+		buildCanSeeIndex();
+		_player.TakeTurn();
+	};
+	
+	var getDoor = function (x,y) {
+		var room;
+		var door;
+		
+		if (isDoor(x,y)) {
+			room = _rooms[_doorIndex[x][y].roomIndex];
+			door = room.doors[_doorIndex[x][y].doorIndex];
+			return door;
+		};
+	};
+	
+	var isDoor = function (x,y) {
+		return _doorIndex[x][y] !== -1;
 	};
 	
 	var goDown = function () {
@@ -432,6 +657,7 @@ var Rohg = new function () {
 		return _map[x][y] === CELL_TYPE.STAIRS_DOWN;
 	};
 	
+	// This "discovers" the area, it does not handle vision
 	var unshroudPlayerLightRadius = function (x,y) {
 		var radius = _player.lightRadius;
 		
@@ -496,7 +722,7 @@ var Rohg = new function () {
 						break;
 						
 					case CELL_TYPE.DOOR_OPEN:
-						fill(i,j,COLORS.DarkRed);
+						fillImage(i,j,DOOR_OPEN_IMAGE);
 						break;
 						
 					case CELL_TYPE.ROOM_WALL:
@@ -642,6 +868,56 @@ var Rohg = new function () {
 		_statsContext.fillStyle = COLORS.Black;
 		_statsContext.font = "10pt Arial";
 		_statsContext.fillText(_statNumberOfRooms - _statDiscoveredRooms.length,53,139);
+		
+		// Turns Label
+		_statsContext.fillStyle = COLORS.Black;
+		_statsContext.font = "7pt Arial";
+		_statsContext.fillText("Turn",40,175);
+		
+		// Turns Container Outline
+		_statsContext.fillStyle = COLORS.Black;
+		_statsContext.fillRect(24, 179, 44, 22);
+		
+		// Turns Container 
+		_statsContext.fillStyle = COLORS.White;
+		_statsContext.fillRect(25, 180, 42, 20);	
+
+		// Turns Data
+		_statsContext.fillStyle = COLORS.Black;
+		_statsContext.font = "10pt Arial";
+		_statsContext.fillText(_player.turn,28,194);
+		
+		// Next Action Label
+		_statsContext.fillStyle = COLORS.Black;
+		_statsContext.font = "7pt Arial";
+		_statsContext.fillText("Next Action",25,220);
+		
+		// Next Action Container Outline
+		_statsContext.fillStyle = COLORS.Black;
+		_statsContext.fillRect(7, 224, 82, 22);
+		
+		// Next Action Container 
+		_statsContext.fillStyle = COLORS.White;
+		_statsContext.fillRect(8, 225, 80, 20);	
+
+		// Next Action Data
+		_statsContext.fillStyle = COLORS.Black;
+		_statsContext.font = "10pt Arial";
+		_statsContext.fillText(getNextActionString(),12,239);
+	};
+	
+	var getNextActionString = function () {
+		switch (_player.nextAction) {
+			case ACTION_TYPE.MOVE:
+				return "Move";
+				break;
+			case ACTION_TYPE.OPEN_DOOR:
+				return "Open Door";
+				break;
+			case ACTION_TYPE.CLOSE_DOOR:
+				return "Close Door";
+				break;
+		}
 	};
 	
 	var statsMessage = function (message,x,y) {
