@@ -35,8 +35,8 @@ var Rohg = new function () {
 	var MAP_TILE_HEIGHT = 36;
 	var MAP_SCALE_FACTOR = 16;
 	var MAX_SCREEN_TICK = 10000;
-	var FPS = 15;
-	var DEBUG = true;
+	var FPS = 30;
+	var DEBUG = false;
 	var MAX_MAP_SCALE = 64;
 	var MIN_MAP_SCALE = 4;
 	var UNLIMITED_SIGHT = false;
@@ -121,6 +121,11 @@ var Rohg = new function () {
 		OPEN_DOOR:1,
 		CLOSE_DOOR:2
 	};
+	var EFFECTS = {
+		DOUBLE_STRENGTH:0,
+		DOUBLE_AGILITY:1,
+		DOUBLE_INTELLIGENCE:2
+	};
 	
 	/*
 		Context
@@ -157,15 +162,15 @@ var Rohg = new function () {
 			return;
 		};
 		
-		
+		registerEvents();
 		uiInit();
 		populateOptions();
 		setContext();
+		doLoadingScreen();
 		initLog();
 		initMap();	
 		initPlayer();
 		bindEvents();
-		startScreenTimer();
 	};
 	
 	this.Log = function (msg) {
@@ -175,6 +180,50 @@ var Rohg = new function () {
 	/*
 		Private functions
 	*/
+	var doLoadingScreen = function () {
+		showLoadingScreen();
+		setTimeout(fadeLoadingScreen, 3000);
+	};
+	
+	var showLoadingScreen = function () {
+		_mainContext.fillStyle = COLORS.Black;
+		_mainContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+		_mainContext.fillStyle = COLORS.White;
+		_mainContext.font = "200px Arial";
+		_mainContext.fillText("Rohg",(CANVAS_WIDTH-500)/2,(CANVAS_HEIGHT+100)/2);
+	};
+	
+	var fadeLoadingScreen = function () {
+		var counterStart = 90;
+		var counter = counterStart;
+		var timer;
+		var opacity, color;
+		
+		timer = setInterval(function () {
+			if (counter <= 0) {
+				window.clearInterval(timer);
+				return;
+			}
+			
+			drawScreen();
+			
+			opacity = counter / counterStart;
+			color = "rgba(0,0,0," + opacity + ")"
+			
+			_mainContext.fillStyle = color;
+			_mainContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+			
+			counter--;
+			
+		}, 1000/FPS);
+	};
+	
+	var registerEvents = function () {
+		document.addEventListener("turn", function (event) {
+			drawScreen();
+		}, false);
+	};
+	
 	var buildRoomAndDoorIndex = function () {
 		var result = [];
 		var doorResult = [];
@@ -544,9 +593,36 @@ var Rohg = new function () {
 					tryGoUp();
 				}
 				break;
+			case 66: // b
+				if (shiftKey) { // B
+					debug_doubleStrength();
+				}
+				break;
+			case 78: // n
+				if (shiftKey) { // N
+					debug_doubleAgility();
+				}
+				break;
+			case 77: // m
+				if (shiftKey) { // M
+					debug_doubleIntelligence();
+				}
+				break;
 			default:
 				break;		
 		}
+	};
+	
+	var debug_doubleStrength = function () {
+		_player.AddEffect(EFFECTS.DOUBLE_STRENGTH, 5);
+	};
+	
+	var debug_doubleAgility = function () {
+		_player.AddEffect(EFFECTS.DOUBLE_AGILITY, 5);
+	};
+	
+	var debug_doubleIntelligence = function () {
+		_player.AddEffect(EFFECTS.DOUBLE_INTELLIGENCE, 5);
 	};
 
 	var setCloseDoor = function () {
@@ -666,6 +742,7 @@ var Rohg = new function () {
 		} else {
 			unshroudPlayerLightRadius(x,y);
 		}
+		drawScreen();
 	};
 	
 	var openDoor = function (door) {

@@ -24,11 +24,13 @@ var Player = new function () {
 	var MAX_MANA_MULTIPLIER;
 	var ARMOR_MULT;
 	var _items;
+	var _effectIdCounter;
 	// Resetter
 	var resetGlobals = function () {
 		MAX_HEALTH_MULTIPLIER = 2
 		MAX_MANA_MULTIPLIER = 2
 		ARMOR_MULT = 2;
+		_effectIdCounter = 0;
 		_items = [];
 	};
 	
@@ -47,6 +49,11 @@ var Player = new function () {
 		OPEN_DOOR:1,
 		CLOSE_DOOR:2
 	};
+	var EFFECTS = {
+		DOUBLE_STRENGTH:0,
+		DOUBLE_AGILITY:1,
+		DOUBLE_INTELLIGENCE:2
+	};
 	
 	
 	/*
@@ -64,10 +71,13 @@ var Player = new function () {
 			agi:agi,
 			intel:intel,
 			lightRadius:lightRadius,
+			effects:[],
 			currentHealth:currentHealth,
 			currentMana:currentMana,
 			turn:0,
 			nextAction:ACTION_TYPE.MOVE,
+			AddEffect:ôaddEffect,
+			RemoveEffect:ôremoveEffect,
 			SetAction:ôsetAction,
 			Log:ôlog,
 			TakeTurn:ôtakeTurn,
@@ -82,6 +92,14 @@ var Player = new function () {
 	/*
 		Member functions
 	*/
+	var ôaddEffect = function (effectType, duration) {
+		addEffect(this, effectType, duration);
+	};
+	
+	var ôremoveEffect = function () {
+		
+	};
+	
 	var ôlog = function (messageText) {
 		addMessage(this, messageText);
 	};
@@ -136,13 +154,48 @@ var Player = new function () {
 	/*
 		Private functions
 	*/
+	var decrementEffects = function (player) {
+		for (var i in player.effects) {
+			if (player.effects[i] === undefined || player.effects[i] === -1) {
+				continue;
+			}
+			
+			player.effects[i].duration--;
+			
+			if (player.effects[i].duration === 0) {
+				removeEffect(player, i);
+			}
+		};
+	};
+	
+	var addEffect = function (player, effectType, duration) {
+		var effect = Effects.GetEffect(effectType, duration);
+		
+		effect.Init(player);
+		addMessage(player, effect.initMessage);
+		
+		player.effects[_effectIdCounter] = effect;
+		_effectIdCounter++;
+	};
+	
+	var removeEffect = function (player, effectId) {
+		var effect = player.effects[effectId];
+		
+		effect.Destroy(player);
+		addMessage(player, effect.destroyMessage);
+		
+		player.effects[effectId] = undefined;
+	};
+	
 	var addMessage = function (player, messageText) {
 		Log.AddMessage(messageText,player.turn);
 	};
 	
 	var takeTurn = function (player) {
+		decrementEffects(player);
 		player.turn++;
 		player.nextAction = ACTION_TYPE.MOVE;
+		document.dispatchEvent(new Event("turn"));
 	};
 	
 	var getNewInv = function () {
