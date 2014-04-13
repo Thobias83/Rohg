@@ -48,12 +48,22 @@ var Player = new function () {
 		MOVE:0,
 		OPEN_DOOR:1,
 		CLOSE_DOOR:2,
-		KICK:3
+		KICK:3,
+		WEAR:4,
+		TAKE_OFF:5
 	};
 	var EFFECTS = {
 		DOUBLE_STRENGTH:0,
 		DOUBLE_AGILITY:1,
 		DOUBLE_INTELLIGENCE:2
+	};
+	var ITEM_TYPE = {
+		WEARABLE:0,
+		WIELDABLE:1,
+		DRINKABLE:2,
+		READABLE:3,
+		EATABLE:4,
+		PASSIVE:5
 	};
 	
 	
@@ -78,6 +88,7 @@ var Player = new function () {
 			currentMana:currentMana,
 			turn:0,
 			nextAction:ACTION_TYPE.MOVE,
+			MenuSelect:ômenuSelect,
 			AddItem:ôaddItem,
 			RemoveItem:ôremoveItem,
 			WearItem:ôwearItem,
@@ -96,6 +107,10 @@ var Player = new function () {
 	/*
 		Member functions
 	*/
+	var ômenuSelect = function (selectionNumber) {
+		menuSelect(this, selectionNumber);
+	};
+	
 	var ôaddEffect = function (effectType, duration) {
 		return addEffect(this, effectType, duration);
 	};
@@ -129,13 +144,21 @@ var Player = new function () {
 			case ACTION_TYPE.MOVE:
 				break;
 			case ACTION_TYPE.OPEN_DOOR:
-				addMessage(this, "Opening...")
+				addMessage(this, "Opening...");
 				break;
 			case ACTION_TYPE.CLOSE_DOOR:
-				addMessage(this, "Closing...")
+				addMessage(this, "Closing...");
 				break;
 			case ACTION_TYPE.KICK:
-				addMessage(this, "Kicking...")
+				addMessage(this, "Kicking...");
+				break;
+			case ACTION_TYPE.WEAR:
+				showWearableList(this);
+				break;
+			case ACTION_TYPE.TAKE_OFF:
+				showWornList(this);
+				break;
+			default:
 				break;
 		}
 		this.nextAction = nextAction;
@@ -169,6 +192,19 @@ var Player = new function () {
 	/*
 		Private functions
 	*/
+	var menuSelect = function (player, selectionNumber) {
+		switch (player.nextAction) {
+			case ACTION_TYPE.WEAR:
+				wearBySelection(player, selectionNumber);
+				break;
+			case ACTION_TYPE.TAKE_OFF:
+				takeOffBySelection(player, selectionNumber);
+				break;
+			default:
+				break;
+		}
+	};
+	
 	var decrementEffects = function (player) {
 		for (var i in player.effects) {
 			if (player.effects[i] === undefined || player.effects[i] === -1) {
@@ -190,6 +226,8 @@ var Player = new function () {
 		item.Add(player);
 		addMessage(player, "Added item: " + item.name);
 		
+		console.log(player.items);
+		
 		return _itemIdCounter - 1;
 	};
 	
@@ -202,10 +240,109 @@ var Player = new function () {
 		player.items[itemId] = undefined;
 	};
 	
+	// Returns a list of items that can be worn
+	var getWearableSelections = function (player) {
+		var selection = 0;
+		var itemIds = []; // subscript is selection number, value is itemId
+		
+		for (var i = 0; i < player.items.length; i++) {
+			if (player.items[i] != undefined && player.items[i].itemType === ITEM_TYPE.WEARABLE) {
+				itemIds[selection] = i;
+				selection++;
+			};
+		};
+		
+		return itemIds;
+	};
+	
+	// Returns a list of items that are worn
+	var getWornSelections = function (player) {
+		var selection = 0;
+		var itemIds = []; // subscript is selection number, value is itemId
+		
+		for (var i = 0; i < player.items.length; i++) {
+			if (player.items[i] != undefined && player.items[i].itemType === ITEM_TYPE.WEARABLE && player.items[i].worn === true) {
+				itemIds[selection] = i;
+				selection++;
+			};
+		};
+		
+		return itemIds;
+	};
+	
+	var showWornList = function (player) {
+		var itemIds = getWornSelections(player);
+		
+		if (itemIds.length === 0) {
+			addMessage(player, "You are not wearing anything.");
+			player.nextAction = ACTION_TYPE.MOVE;
+			return;
+		}
+		
+		addMessage(player, "What would you like to take off?");
+		for (var i = 0; i < itemIds.length; i++) {
+			addMessage(player, "    " + i + ": " + player.items[itemIds[i]].name);
+		}
+	};
+	
+	var showWearableList = function (player) {
+		var itemIds = getWearableSelections(player);
+		
+		if (itemIds.length === 0) {
+			addMessage(player, "You have nothing to wear.");
+			player.nextAction = ACTION_TYPE.MOVE;
+			return;
+		}
+		
+		addMessage(player, "What would you like to put on?");
+		for (var i = 0; i < itemIds.length; i++) {
+			addMessage(player, "    " + i + ": " + player.items[itemIds[i]].name);
+		}
+	};
+	
+	var takeOffBySelection = function (player, selectionNumber) {
+		var itemIds = getWornSelections(player);
+		
+		if (itemIds.length === 0) {
+			addMessage(player, "You are not wearing anything.");
+			player.nextAction = ACTION_TYPE.MOVE;
+			return;
+		}
+		
+		if (itemIds[selectionNumber] === undefined) {
+			addMessage(player, "Invalid selection.");
+			showWornList(player);
+			return;
+		}
+		
+		takeOffItem(player, itemIds[selectionNumber]);
+	};
+	
+	var wearBySelection = function (player, selectionNumber) {
+		var itemIds = getWearableSelections(player);
+		
+		if (itemIds.length === 0) {
+			addMessage(player, "You have nothing to wear.");
+			player.nextAction = ACTION_TYPE.MOVE;
+			return;
+		}
+		
+		if (itemIds[selectionNumber] === undefined) {
+			addMessage(player, "Invalid selection.");
+			showWearableList(player);
+			return;
+		}
+		
+		wearItem(player, itemIds[selectionNumber]);
+	};
+	
 	var wearItem = function (player, itemId) {
 		var item = player.items[itemId];
 		
+		addMessage(player, "You put on " + item.name + ".");
 		item.Wear(player);
+		
+		takeTurn(player);
 	};
 	
 	var takeOffItem = function (player, itemId) {

@@ -17,7 +17,7 @@
 */
 var Log = new function () {
 	
-	var CANVAS_HEIGHT = 96;
+	var CANVAS_HEIGHT = 576;
 	var CANVAS_WIDTH = 256;
 	var LINE_HEIGHT = 12;
 	var MAX_LINES = Math.floor(CANVAS_HEIGHT / LINE_HEIGHT);
@@ -55,9 +55,9 @@ var Log = new function () {
 	};
 	
 	var initUi = function () {
-		var center = (window.innerWidth - CANVAS_WIDTH) / 2;
+		var centerY = (window.innerHeight - CANVAS_WIDTH) / 2;
 		$("#LogContainer").draggable();
-		$("#LogContainer").css("bottom", 10).css("left", center);
+		$("#LogContainer").css("top", centerY).css("left", 100);
 	};
 	
 	var setContext = function () {

@@ -37,7 +37,8 @@ var Items = new function () {
 	var EFFECTS = {
 		DOUBLE_STRENGTH:0,
 		DOUBLE_AGILITY:1,
-		DOUBLE_INTELLIGENCE:2
+		DOUBLE_INTELLIGENCE:2,
+		LIGHT_RADIUS_UP:3
 	};
 	
 	var ITEMS = {
@@ -101,7 +102,7 @@ var Items = new function () {
 			wearable_type: WEARABLE_TYPE.AMULET,
 			ac: 0,
 			worn: false,
-			wear_status_effect: EFFECTS.DOUBLE_INTELLIGENCE,
+			wear_status_effect: EFFECTS.LIGHT_RADIUS_UP,
 			wear_status_effect_index: -1,
 			drink_status_effect: undefined,
 			read_status_effect: undefined,

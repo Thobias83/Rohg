@@ -20,7 +20,8 @@ var Effects = new function () {
 	var EFFECTS = {
 		DOUBLE_STRENGTH:0,
 		DOUBLE_AGILITY:1,
-		DOUBLE_INTELLIGENCE:2
+		DOUBLE_INTELLIGENCE:2,
+		LIGHT_RADIUS_UP:3
 	};
 
 	/*
@@ -34,6 +35,8 @@ var Effects = new function () {
 				return doubleAgility(duration);
 			case EFFECTS.DOUBLE_INTELLIGENCE:
 				return doubleIntelligence(duration);
+			case EFFECTS.LIGHT_RADIUS_UP:
+				return lightRadiusUp(duration);
 			default:
 				break;
 		}
@@ -43,6 +46,25 @@ var Effects = new function () {
 	/*
 		Effects
 	*/
+	var lightRadiusUp = function (duration) {
+		var init = function (player) {
+			player.lightRadius += 2;
+		};
+		
+		var destroy = function (player) {
+			player.lightRadius -= 2;
+		};
+		
+		return {
+			name: "Light Radius Up",
+			initMessage: "You feel more radiant.",
+			destroyMessage: "Your extra radiance fades.",
+			value: [],
+			duration: duration,
+			Init: init,
+			Destroy: destroy
+		};
+	};
 	var doubleStrength = function (duration) {
 		var init = function (player) {
 			this.value[0] = player.str;

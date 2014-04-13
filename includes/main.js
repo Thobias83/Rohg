@@ -123,12 +123,15 @@ var Rohg = new function () {
 		MOVE:0,
 		OPEN_DOOR:1,
 		CLOSE_DOOR:2,
-		KICK:3
+		KICK:3,
+		WEAR:4,
+		TAKE_OFF:5
 	};
 	var EFFECTS = {
 		DOUBLE_STRENGTH:0,
 		DOUBLE_AGILITY:1,
-		DOUBLE_INTELLIGENCE:2
+		DOUBLE_INTELLIGENCE:2,
+		LIGHT_RADIUS_UP:3
 	};
 	var ITEMS = {
 		AMULET_OF_THE_TITANS:0
@@ -527,7 +530,7 @@ var Rohg = new function () {
 	var initPlayer = function () {
 		
 		// x,y,str,agi,intel,lightRadius,currentHealth,currentMana
-		_player = Player.Init(Math.floor(MAP_TILE_WIDTH / 2), Math.floor(MAP_TILE_HEIGHT / 2), 10, 10, 10, 4, 10, 10);
+		_player = Player.Init(Math.floor(MAP_TILE_WIDTH / 2), Math.floor(MAP_TILE_HEIGHT / 2), 10, 10, 10, 1, 10, 10);
 
 		resetStats();
 		buildShroudedMap();
@@ -655,9 +658,45 @@ var Rohg = new function () {
 					setKick();
 				}
 				break;
+			case 80: 
+				if (shiftKey) { // P
+					
+				} else { // p
+					setWear();
+				}
+				break;
+			case 84: 
+				if (shiftKey) { // T
+					
+				} else { // t
+					setTakeOff();
+				}
+				break;
+			case 48:
+			case 49:
+			case 50:
+			case 51:
+			case 52:
+			case 53:
+			case 54:
+			case 55:
+			case 56:
+			case 57:
+				if (shiftKey) { // )@#$%^&*(
+					
+				} else { // 123456789
+					menuSelect(keyPressed - 48);
+				}
+				break;
 			default:
 				break;		
 		}
+	};
+	
+	var menuSelect = function (selectionNumber) {
+		_player.MenuSelect(selectionNumber);
+		buildCanSeeIndex();
+		drawScreen();
 	};
 	
 	var debug_doubleStrength = function () {
@@ -690,6 +729,14 @@ var Rohg = new function () {
 	
 	var setKick = function () {
 		_player.SetAction(ACTION_TYPE.KICK);
+	};
+	
+	var setWear = function () {
+		_player.SetAction(ACTION_TYPE.WEAR);
+	};
+	
+	var setTakeOff = function () {
+		_player.SetAction(ACTION_TYPE.TAKE_OFF);
 	};
 	
 	var player_moveUp = function () {
