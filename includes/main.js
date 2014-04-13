@@ -130,7 +130,9 @@ var Rohg = new function () {
 		DOUBLE_AGILITY:1,
 		DOUBLE_INTELLIGENCE:2
 	};
-	
+	var ITEMS = {
+		AMULET_OF_THE_TITANS:0
+	};
 	/*
 		Context
 	*/
@@ -189,7 +191,18 @@ var Rohg = new function () {
 		setTimeout(fadeLoadingScreen, 3000);
 	};
 	
-	var showLoadingScreen = function () {
+	var showLoadingScreen = function (opacity) {
+		
+		if (opacity != undefined) {
+		
+			_mainContext.fillStyle = "rgba(0,0,0," + opacity + ")"; //Black
+			_mainContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+			_mainContext.fillStyle = "rgba(255,255,255," + opacity + ")"; //White
+			_mainContext.font = "200px Arial";
+			_mainContext.fillText("Rohg",(CANVAS_WIDTH-500)/2,(CANVAS_HEIGHT+100)/2);
+			return;
+		}
+		
 		_mainContext.fillStyle = COLORS.Black;
 		_mainContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 		_mainContext.fillStyle = COLORS.White;
@@ -212,10 +225,8 @@ var Rohg = new function () {
 			drawScreen();
 			
 			opacity = counter / counterStart;
-			color = "rgba(0,0,0," + opacity + ")"
 			
-			_mainContext.fillStyle = color;
-			_mainContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+			showLoadingScreen(opacity);
 			
 			counter--;
 			
@@ -269,6 +280,7 @@ var Rohg = new function () {
 		var room = _roomIndex[x][y];
 		var roomX, roomY, roomWidth, roomHeight;
 		var doorPoint;
+		var obstruction;
 		
 		// initialize the array
 		for (var i = 0; i < _map.length; i++) {
@@ -282,7 +294,8 @@ var Rohg = new function () {
 		if (UNLIMITED_SIGHT) {
 			for (var i = 0; i < MAP_TILE_WIDTH; i++) {
 				for (var j = 0; j < MAP_TILE_HEIGHT; j++) {
-					if (!obstructionExistsBetween({x:x,y:y}, {x:i,y:j})) {
+					obstruction = obstructionExistsBetween({x:x,y:y}, {x:i,y:j})
+					if (obstruction === false) {
 						result[i][j] = true;
 					}
 				}
@@ -292,7 +305,8 @@ var Rohg = new function () {
 		// Check the player's light radius
 		for (var i = x - radius; i <= x + radius; i++) {
 			for (var j = y - radius; j <= y + radius; j++) {
-				if (!obstructionExistsBetween({x:x,y:y}, {x:i,y:j})) {
+				obstruction = obstructionExistsBetween({x:x,y:y}, {x:i,y:j})
+				if (obstruction === false) {
 					result[i][j] = true;
 				}
 			}
@@ -307,7 +321,8 @@ var Rohg = new function () {
 			
 			for (var i = roomX; i < roomX + roomWidth; i++) {
 				for (var j = roomY; j < roomY + roomHeight; j++) {
-					if (!obstructionExistsBetween({x:x,y:y}, {x:i,y:j})) {
+					obstruction = obstructionExistsBetween({x:x,y:y}, {x:i,y:j})
+					if (obstruction === false) {
 						result[i][j] = true;
 					}
 				}
@@ -317,7 +332,8 @@ var Rohg = new function () {
 		for (var i = 0; i < _rooms.length; i++) {
 			for (var j = 0; j < _rooms[i].doors.length; j++) {
 				doorPoint = {x:_rooms[i].doors[j].x, y:_rooms[i].doors[j].y};
-				if (i != room && !obstructionExistsBetween({x:x,y:y}, doorPoint)) { // if the player can see the door and its not in the same room
+				obstruction = obstructionExistsBetween({x:x,y:y}, doorPoint)
+				if (i != room && (obstruction === false)) { // if the player can see the door and its not in the same room
 					roomX = _rooms[i].x;
 					roomY = _rooms[i].y;
 					roomWidth = _rooms[i].width;
@@ -325,7 +341,8 @@ var Rohg = new function () {
 					
 					for (var a = roomX; a < roomX + roomWidth; a++) {
 						for (var b = roomY; b < roomY + roomHeight; b++) {
-							if (!obstructionExistsBetween({x:x,y:y}, {x:a,y:b}, true, i)) {
+							obstruction = obstructionExistsBetween({x:x,y:y}, {x:a,y:b}, true)
+							if (obstruction === false) {
 								result[a][b] = true;
 							}
 						}
@@ -367,23 +384,40 @@ var Rohg = new function () {
 		return false;
 	};
 	
+	var isCornerOfAnyRoom = function (point) {
+		for (var i = 0; i < _rooms.length; i++) {
+			if (isCornerOfRoom(point,i)){
+				return true;
+			}
+		}
+		
+		return false;
+	};
+	
+	// true : an obstruction   false : no obstruction   -1 : a corner obstruction
 	var obstructionExistsBetween = function (a,b, checkCorners, roomIndex) {
 		var x1 = a.x;
 		var y1 = a.y;
 		var x0 = b.x;
 		var y0 = b.y;
+		var count;
+		
+		if (a.x === b.x && a.y === b.y) {
+			return false;
+		}
 		
 		checkCorners = checkCorners || false;
 		
+		// Magic
+		count = 0;
 		var dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
 		var dy = Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1; 
 		var err = (dx>dy ? dx : -dy)/2;
-
 		while (true) {
 			if (_map[x0][y0] === CELL_TYPE.WALL || _map[x0][y0] === CELL_TYPE.ROOM_WALL || _map[x0][y0] === CELL_TYPE.DOOR_CLOSED) {
 				return true;
 			}
-			if (checkCorners && isCornerOfRoom({x:x0,y:y0},roomIndex)) {
+			if (checkCorners && isCornerOfAnyRoom({x:x0,y:y0})) {
 				return true;
 			}
 			if (x0 === x1 && y0 === y1) break;
@@ -493,7 +527,7 @@ var Rohg = new function () {
 	var initPlayer = function () {
 		
 		// x,y,str,agi,intel,lightRadius,currentHealth,currentMana
-		_player = Player.Init(Math.floor(MAP_TILE_WIDTH / 2), Math.floor(MAP_TILE_HEIGHT / 2), 10, 10, 10, 1, 10, 10);
+		_player = Player.Init(Math.floor(MAP_TILE_WIDTH / 2), Math.floor(MAP_TILE_HEIGHT / 2), 10, 10, 10, 4, 10, 10);
 
 		resetStats();
 		buildShroudedMap();
@@ -607,9 +641,11 @@ var Rohg = new function () {
 					debug_doubleAgility();
 				}
 				break;
-			case 77: // m
+			case 77: 
 				if (shiftKey) { // M
 					debug_doubleIntelligence();
+				} else { // m
+					debug_giveAmuletOfTitans();
 				}
 				break;
 			case 75: 
@@ -637,6 +673,11 @@ var Rohg = new function () {
 	var debug_doubleIntelligence = function () {
 		_player.AddEffect(EFFECTS.DOUBLE_INTELLIGENCE, 5);
 		_player.TakeTurn();
+	};
+	
+	var debug_giveAmuletOfTitans = function () {
+		var item = Items.GetItem(ITEMS.AMULET_OF_THE_TITANS);
+		_player.AddItem(item);
 	};
 
 	var setCloseDoor = function () {
@@ -786,9 +827,6 @@ var Rohg = new function () {
 		
 		if (isDownStairs(x,y)) {
 			_player.Log("You see a stairway leading down.");
-		// } else if (isRoom(x,y)){
-			// unshroudRoomByLocation(x,y);
-			// statsRegisterRoom(_roomIndex[x][y]);
 		} else {
 			unshroudPlayerLightRadius(x,y);
 		}
@@ -853,12 +891,37 @@ var Rohg = new function () {
 	// This "discovers" the area, it does not handle vision
 	var unshroudPlayerLightRadius = function (x,y) {
 		var radius = _player.lightRadius;
+		var obstruction;
 		
 		for (var i = -radius; i <= radius; i++) {
 			for (var j = -radius; j <= radius; j++) {
-				_shroudedMap[x+i][y+j] = _map[x+i][y+j];
+				obstruction = obstructionExistsBetween({x:x,y:y}, {x:x+i,y:y+j})
+				if (obstruction === false || adjacentCellIsCanSee(x+i,y+j)) {
+					_shroudedMap[x+i][y+j] = _map[x+i][y+j];
+				}
 			}
 		}
+	};
+	
+	var adjacentCellIsCanSee = function (x,y) {
+		if (_canSeeIndex[x] != undefined) {
+			if (_canSeeIndex[x][y+1] === true) {
+				return true;
+			}
+			if (_canSeeIndex[x][y-1] === true) {
+				return true;
+			}
+		}
+		
+		if (_canSeeIndex[x+1] != undefined && _canSeeIndex[x+1][y] === true) {
+			return true;
+		}
+		
+		if (_canSeeIndex[x-1] != undefined && _canSeeIndex[x-1][y] === true) {
+			return true;
+		}
+		
+		return false;
 	};
 	
 	var playerCanMove = function (x,y) {

@@ -23,15 +23,15 @@ var Player = new function () {
 	var MAX_HEALTH_MULTIPLIER;
 	var MAX_MANA_MULTIPLIER;
 	var ARMOR_MULT;
-	var _items;
 	var _effectIdCounter;
+	var _itemIdCounter;
 	// Resetter
 	var resetGlobals = function () {
 		MAX_HEALTH_MULTIPLIER = 2
 		MAX_MANA_MULTIPLIER = 2
 		ARMOR_MULT = 2;
 		_effectIdCounter = 0;
-		_items = [];
+		_itemIdCounter = 0;
 	};
 	
 	
@@ -73,10 +73,15 @@ var Player = new function () {
 			intel:intel,
 			lightRadius:lightRadius,
 			effects:[],
+			items:[],
 			currentHealth:currentHealth,
 			currentMana:currentMana,
 			turn:0,
 			nextAction:ACTION_TYPE.MOVE,
+			AddItem:ôaddItem,
+			RemoveItem:ôremoveItem,
+			WearItem:ôwearItem,
+			TakeOffItem:ôtakeOffItem,
 			AddEffect:ôaddEffect,
 			RemoveEffect:ôremoveEffect,
 			SetAction:ôsetAction,
@@ -84,9 +89,7 @@ var Player = new function () {
 			TakeTurn:ôtakeTurn,
 			Move:ômove,
 			MaxHealth: ôgetMaxHealth,
-			MaxMana: ôgetMaxMana,
-			PickupItem: ôaddItem,
-			GetItems: ôgetItems
+			MaxMana: ôgetMaxMana
 		};
 	};
 	
@@ -94,11 +97,27 @@ var Player = new function () {
 		Member functions
 	*/
 	var ôaddEffect = function (effectType, duration) {
-		addEffect(this, effectType, duration);
+		return addEffect(this, effectType, duration);
 	};
 	
-	var ôremoveEffect = function () {
-		
+	var ôremoveEffect = function (effectIndex) {
+		removeEffect(this, effectIndex);
+	};
+	
+	var ôaddItem = function (item) {
+		return addItem(this, item);
+	};
+	
+	var ôremoveItem = function (itemIndex) {
+		removeItem(this, itemIndex);
+	};
+	
+	var ôwearItem = function (itemIndex) {
+		wearItem(this, itemIndex);
+	};
+	
+	var ôtakeOffItem = function (itemIndex) {
+		takeOffItem(this, itemIndex);
 	};
 	
 	var ôlog = function (messageText) {
@@ -120,14 +139,6 @@ var Player = new function () {
 				break;
 		}
 		this.nextAction = nextAction;
-	};
-	
-	var ôgetItems = function () {
-		return _items;
-	};
-	
-	var ôaddItem = function (item) {
-		_items.push(item);
 	};
 	
 	var ôgetMaxHealth = function () {
@@ -172,6 +183,37 @@ var Player = new function () {
 		};
 	};
 	
+	var addItem = function (player, item) {
+		player.items[_itemIdCounter] = item;
+		_itemIdCounter++;
+		
+		item.Add(player);
+		addMessage(player, "Added item: " + item.name);
+		
+		return _itemIdCounter - 1;
+	};
+	
+	var removeItem = function (player, itemId) {
+		var item = player.items[itemId];
+		
+		item.Remove(player);
+		addMessage(player, "Removed item: " + item.name);
+		
+		player.items[itemId] = undefined;
+	};
+	
+	var wearItem = function (player, itemId) {
+		var item = player.items[itemId];
+		
+		item.Wear(player);
+	};
+	
+	var takeOffItem = function (player, itemId) {
+		var item = player.items[itemId];
+		
+		item.TakeOff(player);
+	};
+	
 	var addEffect = function (player, effectType, duration) {
 		var effect = Effects.GetEffect(effectType, duration);
 		
@@ -180,6 +222,7 @@ var Player = new function () {
 		
 		player.effects[_effectIdCounter] = effect;
 		_effectIdCounter++;
+		return _effectIdCounter - 1;
 	};
 	
 	var removeEffect = function (player, effectId) {
