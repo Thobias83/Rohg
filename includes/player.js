@@ -70,7 +70,7 @@ var Player = new function () {
 	/*
 		Constructor
 	*/
-	this.Init = function (x,y,str,agi,intel,lightRadius,currentHealth,currentMana) {
+	this.Init = function (x,y,str,agi,intel,lightRadius,currentHealth,currentMana,maxFood) {
 		
 		resetGlobals();
 		
@@ -86,6 +86,9 @@ var Player = new function () {
 			items:[],
 			currentHealth:currentHealth,
 			currentMana:currentMana,
+			maxFood:maxFood,
+			currentFood:maxFood,
+			foodConsumptionRate:1,
 			turn:0,
 			nextAction:ACTION_TYPE.MOVE,
 			MenuSelect:ômenuSelect,

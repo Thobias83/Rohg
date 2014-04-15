@@ -180,6 +180,7 @@ var Rohg = new function () {
 		initMap();	
 		initPlayer();
 		bindEvents();
+		doWelcomeMessage();
 	};
 	
 	this.Log = function (msg) {
@@ -189,6 +190,10 @@ var Rohg = new function () {
 	/*
 		Private functions
 	*/
+	var doWelcomeMessage = function () {
+		_player.Log("You awaken in a strange place.");
+	};
+	
 	var doLoadingScreen = function () {
 		showLoadingScreen();
 		setTimeout(fadeLoadingScreen, 3000);
@@ -529,8 +534,8 @@ var Rohg = new function () {
 	
 	var initPlayer = function () {
 		
-		// x,y,str,agi,intel,lightRadius,currentHealth,currentMana
-		_player = Player.Init(Math.floor(MAP_TILE_WIDTH / 2), Math.floor(MAP_TILE_HEIGHT / 2), 10, 10, 10, 1, 10, 10);
+		// x,y,str,agi,intel,lightRadius,currentHealth,currentMana,maxFood
+		_player = Player.Init(Math.floor(MAP_TILE_WIDTH / 2), Math.floor(MAP_TILE_HEIGHT / 2), 10, 10, 10, 1, 10, 10, 100);
 
 		resetStats();
 		buildShroudedMap();
