@@ -38,7 +38,11 @@ var Items = new function () {
 		DOUBLE_STRENGTH:0,
 		DOUBLE_AGILITY:1,
 		DOUBLE_INTELLIGENCE:2,
-		LIGHT_RADIUS_UP:3
+		LIGHT_RADIUS_UP:3,
+		HUNGRY:4,
+		WEAK:5,
+		FAMISHED:6,
+		STARVING:7
 	};
 	
 	var ITEMS = {

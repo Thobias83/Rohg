@@ -21,7 +21,11 @@ var Effects = new function () {
 		DOUBLE_STRENGTH:0,
 		DOUBLE_AGILITY:1,
 		DOUBLE_INTELLIGENCE:2,
-		LIGHT_RADIUS_UP:3
+		LIGHT_RADIUS_UP:3,
+		HUNGRY:4,
+		WEAK:5,
+		FAMISHED:6,
+		STARVING:7
 	};
 
 	/*
@@ -37,6 +41,14 @@ var Effects = new function () {
 				return doubleIntelligence(duration);
 			case EFFECTS.LIGHT_RADIUS_UP:
 				return lightRadiusUp(duration);
+			case EFFECTS.HUNGRY:
+				return hungry(duration);
+			case EFFECTS.WEAK:
+				return weak(duration);
+			case EFFECTS.FAMISHED:
+				return famished(duration);
+			case EFFECTS.STARVING:
+				return starving(duration);
 			default:
 				break;
 		}
@@ -46,6 +58,78 @@ var Effects = new function () {
 	/*
 		Effects
 	*/
+	var starving = function (duration) {
+		var init = function (player) {
+		};
+		
+		var destroy = function (player) {
+		};
+		
+		return {
+			type: EFFECTS.STARVING,
+			name: "Starving",
+			initMessage: "You are starving to death!",
+			destroyMessage: "You are no longer starving.",
+			value: [],
+			duration: duration,
+			Init: init,
+			Destroy: destroy
+		};
+	};
+	var famished = function (duration) {
+		var init = function (player) {
+		};
+		
+		var destroy = function (player) {
+		};
+		
+		return {
+			type: EFFECTS.FAMISHED,
+			name: "Famished",
+			initMessage: "You feel famished.",
+			destroyMessage: "You no longer feel famished.",
+			value: [],
+			duration: duration,
+			Init: init,
+			Destroy: destroy
+		};
+	};
+	var weak = function (duration) {
+		var init = function (player) {
+		};
+		
+		var destroy = function (player) {
+		};
+		
+		return {
+			type: EFFECTS.WEAK,
+			name: "Starving",
+			initMessage: "You feel weak.",
+			destroyMessage: "You no longer feel weak.",
+			value: [],
+			duration: duration,
+			Init: init,
+			Destroy: destroy
+		};
+	};
+	var hungry = function (duration) {
+		var init = function (player) {
+		};
+		
+		var destroy = function (player) {
+		};
+		
+		return {
+			type: EFFECTS.HUNGRY,
+			name: "Hungry",
+			initMessage: "You feel hungry.",
+			destroyMessage: "You no longer feel hungry.",
+			value: [],
+			duration: duration,
+			Init: init,
+			Destroy: destroy
+		};
+	};
 	var lightRadiusUp = function (duration) {
 		var init = function (player) {
 			player.lightRadius += 2;
@@ -56,6 +140,7 @@ var Effects = new function () {
 		};
 		
 		return {
+			type: EFFECTS.LIGHT_RADIUS_UP,
 			name: "Light Radius Up",
 			initMessage: "You feel more radiant.",
 			destroyMessage: "Your extra radiance fades.",
@@ -76,6 +161,7 @@ var Effects = new function () {
 		};
 		
 		return {
+			type: EFFECTS.DOUBLE_STRENGTH,
 			name: "Double Strength",
 			initMessage: "You feel stronger!",
 			destroyMessage: "Your extra strength fades.",
@@ -96,6 +182,7 @@ var Effects = new function () {
 		};
 		
 		return {
+			type: EFFECTS.DOUBLE_AGILITY,
 			name: "Double Agility",
 			initMessage: "You feel quicker!",
 			destroyMessage: "Your extra agility fades.",
@@ -116,6 +203,7 @@ var Effects = new function () {
 		};
 		
 		return {
+			type: EFFECTS.DOUBLE_INTELLIGENCE,
 			name: "Double Intelligence",
 			initMessage: "You feel smarter!",
 			destroyMessage: "Your extra intelligence fades.",

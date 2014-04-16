@@ -55,7 +55,12 @@ var Player = new function () {
 	var EFFECTS = {
 		DOUBLE_STRENGTH:0,
 		DOUBLE_AGILITY:1,
-		DOUBLE_INTELLIGENCE:2
+		DOUBLE_INTELLIGENCE:2,
+		LIGHT_RADIUS_UP:3,
+		HUNGRY:4,
+		WEAK:5,
+		FAMISHED:6,
+		STARVING:7
 	};
 	var ITEM_TYPE = {
 		WEARABLE:0,
@@ -222,6 +227,35 @@ var Player = new function () {
 		};
 	};
 	
+	var getEffectIdsByType = function (player, type) {
+		var results = [];
+		
+		for (var i in player.effects) {
+			if (player.effects[i] === undefined || player.effects[i] === -1) {
+				continue;
+			}
+			
+			if (player.effects[i].type === type) {
+				results.push(i);
+			}
+		};
+		
+		return results;
+	};
+	
+	var isHungry = function (player) {
+		return getEffectIdsByType(player, EFFECTS.HUNGRY).length > 0;
+	};
+	var isWeak = function (player) {
+		return getEffectIdsByType(player, EFFECTS.WEAK).length > 0;
+	};
+	var isFamished = function (player) {
+		return getEffectIdsByType(player, EFFECTS.FAMISHED).length > 0;
+	};
+	var isStarving = function (player) {
+		return getEffectIdsByType(player, EFFECTS.STARVING).length > 0;
+	};
+	
 	var addItem = function (player, item) {
 		player.items[_itemIdCounter] = item;
 		_itemIdCounter++;
@@ -378,11 +412,40 @@ var Player = new function () {
 		Log.AddMessage(messageText,player.turn);
 	};
 	
+	// This is a very important function
 	var takeTurn = function (player) {
+		consumeFood(player);
 		decrementEffects(player);
 		player.turn++;
 		player.nextAction = ACTION_TYPE.MOVE;
+		
+		// This function triggers a browser-wide event so other namespaces can take action on the turn
 		document.dispatchEvent(new Event("turn"));
+	};
+	
+	var consumeFood = function (player) {
+		
+		if (isHungry(player)) {
+			
+		};
+		
+		if (isWeak(player)) {
+			
+		};
+		
+		if (isFamished(player)) {
+			
+		};
+		
+		if (isStarving(player)) {
+			
+		};
+		
+		player.currentFood = player.currentFood - player.foodConsumptionRate;
+		
+		if (player.currentFood > player.maxFood) {
+		
+		}
 	};
 	
 	var getNewInv = function () {
