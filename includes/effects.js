@@ -25,7 +25,8 @@ var Effects = new function () {
 		HUNGRY:4,
 		WEAK:5,
 		FAMISHED:6,
-		STARVING:7
+		STARVING:7,
+		EATING_HALF:8
 	};
 
 	/*
@@ -49,6 +50,8 @@ var Effects = new function () {
 				return famished(duration);
 			case EFFECTS.STARVING:
 				return starving(duration);
+			case EFFECTS.EATING_HALF:
+				return eatingHalf();
 			default:
 				break;
 		}
@@ -58,6 +61,28 @@ var Effects = new function () {
 	/*
 		Effects
 	*/
+	var eatingHalf = function () {
+		var init = function (player) {
+			player.currentFood += player.maxFood * 0.5;
+			if (player.currentFood > player.maxFood) {
+				player.currentFood = player.maxFood;
+			}
+		};
+		
+		var destroy = function (player) {
+		};
+		
+		return {
+			type: EFFECTS.STARVING,
+			name: "Eating Half",
+			initMessage: "Yum!",
+			destroyMessage: undefined,
+			value: [],
+			duration: 1,
+			Init: init,
+			Destroy: destroy
+		};
+	};
 	var starving = function (duration) {
 		var init = function (player) {
 		};
@@ -69,7 +94,7 @@ var Effects = new function () {
 			type: EFFECTS.STARVING,
 			name: "Starving",
 			initMessage: "You are starving to death!",
-			destroyMessage: "You are no longer starving.",
+			destroyMessage: undefined,
 			value: [],
 			duration: duration,
 			Init: init,
@@ -87,7 +112,7 @@ var Effects = new function () {
 			type: EFFECTS.FAMISHED,
 			name: "Famished",
 			initMessage: "You feel famished.",
-			destroyMessage: "You no longer feel famished.",
+			destroyMessage: undefined,
 			value: [],
 			duration: duration,
 			Init: init,
@@ -105,7 +130,7 @@ var Effects = new function () {
 			type: EFFECTS.WEAK,
 			name: "Starving",
 			initMessage: "You feel weak.",
-			destroyMessage: "You no longer feel weak.",
+			destroyMessage: undefined,
 			value: [],
 			duration: duration,
 			Init: init,
@@ -123,7 +148,7 @@ var Effects = new function () {
 			type: EFFECTS.HUNGRY,
 			name: "Hungry",
 			initMessage: "You feel hungry.",
-			destroyMessage: "You no longer feel hungry.",
+			destroyMessage: undefined,
 			value: [],
 			duration: duration,
 			Init: init,

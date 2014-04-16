@@ -42,11 +42,13 @@ var Items = new function () {
 		HUNGRY:4,
 		WEAK:5,
 		FAMISHED:6,
-		STARVING:7
+		STARVING:7,
+		EATING_HALF:8
 	};
 	
 	var ITEMS = {
-		AMULET_OF_THE_TITANS:0
+		AMULET_OF_THE_TITANS:0,
+		COOKIE:1,
 	};
 
 	
@@ -57,9 +59,67 @@ var Items = new function () {
 		switch (item) {
 			case ITEMS.AMULET_OF_THE_TITANS:
 				return amuletOfTheTitans();
+			case ITEMS.COOKIE:
+				return cookie();
 			default:
 				break;
 		}
+	};
+	
+	var cookie = function () {
+		
+		var add = function (player) {
+		};
+		var remove = function (player) {
+		};
+		var wear = function (player) {
+		};
+		var takeOff = function (player) {
+		};
+		var wield = function (player) {
+		};
+		var unwield = function (player) {
+		};
+		var drink = function (player) {
+		};
+		var read = function (player) {
+		};
+		var eat = function (player) {
+			player.AddEffect(this.eat_status_effect, 1);
+		};
+		
+		
+		return {
+			level: 1,
+			itemType: ITEM_TYPE.EATABLE,
+			name: "Cookie",
+			description: "Delicious!",
+			cursed:false,
+			wieldable_type: undefined,
+			damage: undefined,
+			wielded: undefined,
+			wield_status_effect: undefined,
+			wield_status_effect_index: undefined,
+			wearable_type: undefined,
+			ac: undefined,
+			worn: undefined,
+			wear_status_effect: undefined,
+			wear_status_effect_index: undefined,
+			drink_status_effect: undefined,
+			read_status_effect: undefined,
+			eat_status_effect: EFFECTS.EATING_HALF,
+			add_status_effect: undefined,
+			wear_status_effect_index: undefined,
+			Add: add,
+			Remove: remove,
+			Wear: wear,
+			TakeOff: takeOff,
+			Wield: wield,
+			Unwield: unwield,
+			Drink: drink,
+			Read: read,
+			Eat: eat
+		};
 	};
 	
 	var amuletOfTheTitans = function () {

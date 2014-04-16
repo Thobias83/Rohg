@@ -125,7 +125,8 @@ var Rohg = new function () {
 		CLOSE_DOOR:2,
 		KICK:3,
 		WEAR:4,
-		TAKE_OFF:5
+		TAKE_OFF:5,
+		EAT:6
 	};
 	var EFFECTS = {
 		DOUBLE_STRENGTH:0,
@@ -135,10 +136,12 @@ var Rohg = new function () {
 		HUNGRY:4,
 		WEAK:5,
 		FAMISHED:6,
-		STARVING:7
+		STARVING:7,
+		EATING_HALF:8
 	};
 	var ITEMS = {
-		AMULET_OF_THE_TITANS:0
+		AMULET_OF_THE_TITANS:0,
+		COOKIE:1
 	};
 	/*
 		Context
@@ -681,6 +684,13 @@ var Rohg = new function () {
 					setTakeOff();
 				}
 				break;
+			case 69: 
+				if (shiftKey) { // E
+					debug_giveCookie();
+				} else { // e
+					setEat();
+				}
+				break;
 			case 48:
 			case 49:
 			case 50:
@@ -727,6 +737,11 @@ var Rohg = new function () {
 		var item = Items.GetItem(ITEMS.AMULET_OF_THE_TITANS);
 		_player.AddItem(item);
 	};
+	
+	var debug_giveCookie = function () {
+		var item = Items.GetItem(ITEMS.COOKIE);
+		_player.AddItem(item);
+	};
 
 	var setCloseDoor = function () {
 		_player.SetAction(ACTION_TYPE.CLOSE_DOOR);
@@ -738,6 +753,10 @@ var Rohg = new function () {
 	
 	var setKick = function () {
 		_player.SetAction(ACTION_TYPE.KICK);
+	};
+	
+	var setEat = function () {
+		_player.SetAction(ACTION_TYPE.EAT);
 	};
 	
 	var setWear = function () {

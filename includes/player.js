@@ -50,7 +50,8 @@ var Player = new function () {
 		CLOSE_DOOR:2,
 		KICK:3,
 		WEAR:4,
-		TAKE_OFF:5
+		TAKE_OFF:5,
+		EAT:6
 	};
 	var EFFECTS = {
 		DOUBLE_STRENGTH:0,
@@ -60,7 +61,8 @@ var Player = new function () {
 		HUNGRY:4,
 		WEAK:5,
 		FAMISHED:6,
-		STARVING:7
+		STARVING:7,
+		EATING_HALF:8
 	};
 	var ITEM_TYPE = {
 		WEARABLE:0,
@@ -94,6 +96,7 @@ var Player = new function () {
 			maxFood:maxFood,
 			currentFood:maxFood,
 			foodConsumptionRate:1,
+			consumptionChanceD20:16,
 			turn:0,
 			nextAction:ACTION_TYPE.MOVE,
 			MenuSelect:ômenuSelect,
@@ -166,6 +169,9 @@ var Player = new function () {
 			case ACTION_TYPE.TAKE_OFF:
 				showWornList(this);
 				break;
+			case ACTION_TYPE.EAT:
+				showEatableList(this);
+				break;
 			default:
 				break;
 		}
@@ -207,6 +213,9 @@ var Player = new function () {
 				break;
 			case ACTION_TYPE.TAKE_OFF:
 				takeOffBySelection(player, selectionNumber);
+				break;
+			case ACTION_TYPE.EAT:
+				eatBySelection(player, selectionNumber);
 				break;
 			default:
 				break;
@@ -263,8 +272,6 @@ var Player = new function () {
 		item.Add(player);
 		addMessage(player, "Added item: " + item.name);
 		
-		console.log(player.items);
-		
 		return _itemIdCounter - 1;
 	};
 	
@@ -292,6 +299,21 @@ var Player = new function () {
 		return itemIds;
 	};
 	
+	// Returns a list of items that can be eaten
+	var getEatableSelections = function (player) {
+		var selection = 0;
+		var itemIds = []; // subscript is selection number, value is itemId
+		
+		for (var i = 0; i < player.items.length; i++) {
+			if (player.items[i] != undefined && player.items[i].itemType === ITEM_TYPE.EATABLE) {
+				itemIds[selection] = i;
+				selection++;
+			};
+		};
+		
+		return itemIds;
+	};
+	
 	// Returns a list of items that are worn
 	var getWornSelections = function (player) {
 		var selection = 0;
@@ -307,16 +329,16 @@ var Player = new function () {
 		return itemIds;
 	};
 	
-	var showWornList = function (player) {
-		var itemIds = getWornSelections(player);
+	var showEatableList = function (player) {
+		var itemIds = getEatableSelections(player);
 		
 		if (itemIds.length === 0) {
-			addMessage(player, "You are not wearing anything.");
+			addMessage(player, "You have nothing to eat.");
 			player.nextAction = ACTION_TYPE.MOVE;
 			return;
 		}
 		
-		addMessage(player, "What would you like to take off?");
+		addMessage(player, "What would you like to eat?");
 		for (var i = 0; i < itemIds.length; i++) {
 			addMessage(player, "    " + i + ": " + player.items[itemIds[i]].name);
 		}
@@ -337,7 +359,7 @@ var Player = new function () {
 		}
 	};
 	
-	var takeOffBySelection = function (player, selectionNumber) {
+	var showWornList = function (player) {
 		var itemIds = getWornSelections(player);
 		
 		if (itemIds.length === 0) {
@@ -346,13 +368,28 @@ var Player = new function () {
 			return;
 		}
 		
-		if (itemIds[selectionNumber] === undefined) {
-			addMessage(player, "Invalid selection.");
-			showWornList(player);
+		addMessage(player, "What would you like to take off?");
+		for (var i = 0; i < itemIds.length; i++) {
+			addMessage(player, "    " + i + ": " + player.items[itemIds[i]].name);
+		}
+	};
+	
+	var eatBySelection = function (player, selectionNumber) {
+		var itemIds = getEatableSelections(player);
+		
+		if (itemIds.length === 0) {
+			addMessage(player, "You have nothing to eat.");
+			player.nextAction = ACTION_TYPE.MOVE;
 			return;
 		}
 		
-		takeOffItem(player, itemIds[selectionNumber]);
+		if (itemIds[selectionNumber] === undefined) {
+			addMessage(player, "Invalid selection.");
+			showEatableList(player);
+			return;
+		}
+		
+		eatItem(player, itemIds[selectionNumber]);
 	};
 	
 	var wearBySelection = function (player, selectionNumber) {
@@ -371,6 +408,35 @@ var Player = new function () {
 		}
 		
 		wearItem(player, itemIds[selectionNumber]);
+	};
+	
+	var takeOffBySelection = function (player, selectionNumber) {
+		var itemIds = getWornSelections(player);
+		
+		if (itemIds.length === 0) {
+			addMessage(player, "You are not wearing anything.");
+			player.nextAction = ACTION_TYPE.MOVE;
+			return;
+		}
+		
+		if (itemIds[selectionNumber] === undefined) {
+			addMessage(player, "Invalid selection.");
+			showWornList(player);
+			return;
+		}
+		
+		takeOffItem(player, itemIds[selectionNumber]);
+	};
+	
+	var eatItem = function (player, itemId) {
+		var item = player.items[itemId];
+		
+		addMessage(player, "You eat the " + item.name + ".");
+		item.Eat(player);
+		player.RemoveItem(itemId);
+		
+		takeTurn(player);
+		setHunger(player);
 	};
 	
 	var wearItem = function (player, itemId) {
@@ -392,7 +458,9 @@ var Player = new function () {
 		var effect = Effects.GetEffect(effectType, duration);
 		
 		effect.Init(player);
-		addMessage(player, effect.initMessage);
+		if (effect.initMessage != undefined && effect.initMessage != "") {
+			addMessage(player, effect.initMessage);
+		}
 		
 		player.effects[_effectIdCounter] = effect;
 		_effectIdCounter++;
@@ -403,7 +471,9 @@ var Player = new function () {
 		var effect = player.effects[effectId];
 		
 		effect.Destroy(player);
-		addMessage(player, effect.destroyMessage);
+		if (effect.destroyMessage != undefined && effect.destroyMessage != "") {
+			addMessage(player, effect.destroyMessage);
+		}
 		
 		player.effects[effectId] = undefined;
 	};
@@ -414,7 +484,9 @@ var Player = new function () {
 	
 	// This is a very important function
 	var takeTurn = function (player) {
-		consumeFood(player);
+		if (Roll.D20() > player.consumptionChanceD20) {
+			consumeFood(player);
+		}
 		decrementEffects(player);
 		player.turn++;
 		player.nextAction = ACTION_TYPE.MOVE;
@@ -423,29 +495,92 @@ var Player = new function () {
 		document.dispatchEvent(new Event("turn"));
 	};
 	
+	var resetHunger = function (player) {
+		var wasFine = true;
+	
+		for (var i in player.effects) {
+			if (player.effects[i] === undefined || player.effects[i] === -1) {
+				continue;
+			}
+			
+			switch (player.effects[i].type) {
+				case EFFECTS.HUNGRY:
+				case EFFECTS.WEAK:
+				case EFFECTS.FAMISHED:
+				case EFFECTS.STARVING:
+					wasFine = false;
+					removeEffect(player, i);
+				default:
+					break;
+			};
+		};
+		
+		if (!wasFine) {
+			player.Log("You are no longer hungry.");
+		};
+	};
+	
+	var setHunger = function (player) {
+	
+		var type = getCurrentHungerState(player);
+		
+		if (type === undefined) {
+			resetHunger(player);
+			return;
+		}
+		
+		for (var i in player.effects) {
+			if (player.effects[i] === undefined || player.effects[i] === -1) {
+				continue;
+			}
+			
+			if (player.effects[i].type === type) {
+				return;
+			}
+			
+			switch (player.effects[i].type) {
+				case EFFECTS.HUNGRY:
+				case EFFECTS.WEAK:
+				case EFFECTS.FAMISHED:
+				case EFFECTS.STARVING:
+					removeEffect(player, i);
+					addEffect(player, type, -1);
+					return;
+				default:
+					break;
+			};
+		};
+		
+		addEffect(player, type, -1);
+	};
+	
+	var getCurrentHungerState = function (player) {
+		if (player.currentFood === 0) {
+			return EFFECTS.STARVING;
+		}
+		
+		if (player.currentFood < player.maxFood * 0.1) {
+			return EFFECTS.FAMISHED;
+		}
+		
+		if (player.currentFood < player.maxFood * 0.3) {
+			return EFFECTS.WEAK;
+		}
+		
+		if (player.currentFood < player.maxFood * 0.6) {
+			return EFFECTS.HUNGRY;
+		}
+	};
+	
 	var consumeFood = function (player) {
-		
-		if (isHungry(player)) {
-			
-		};
-		
-		if (isWeak(player)) {
-			
-		};
-		
-		if (isFamished(player)) {
-			
-		};
-		
-		if (isStarving(player)) {
-			
-		};
 		
 		player.currentFood = player.currentFood - player.foodConsumptionRate;
 		
-		if (player.currentFood > player.maxFood) {
-		
+		if (player.currentFood <= 0) {
+			player.currentFood = 0;
 		}
+		
+		setHunger(player);
 	};
 	
 	var getNewInv = function () {
