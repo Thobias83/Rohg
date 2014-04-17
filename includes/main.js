@@ -547,6 +547,7 @@ var Rohg = new function () {
 		resetStats();
 		buildShroudedMap();
 		buildCanSeeIndex();
+		debug_giveCookie();
 	};
 	
 	var resetStats = function () {
@@ -876,12 +877,14 @@ var Rohg = new function () {
 				if (Math.random() > 0.80) {
 					sound = new Audio(SOUND_DOOR_KICK_SUCCESS);
 					sound.play();
+					_player.Kick();
 					openDoor(door, "You crash through the door!");
 					return;
 				}
 				
 				sound = new Audio(SOUND_DOOR_KICK_FAIL);
 				sound.play();
+				_player.Kick();
 				_player.TakeTurn("WHAM!");
 				return;
 			}
@@ -952,6 +955,7 @@ var Rohg = new function () {
 		resetDiscoveredRooms();
 		buildCanSeeIndex();
 		_statFloor++;
+		debug_giveCookie();
 		drawScreen();
 	};
 	

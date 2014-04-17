@@ -99,6 +99,7 @@ var Player = new function () {
 			consumptionChanceD20:16,
 			turn:0,
 			nextAction:ACTION_TYPE.MOVE,
+			Kick:ôkick,
 			MenuSelect:ômenuSelect,
 			AddItem:ôaddItem,
 			RemoveItem:ôremoveItem,
@@ -118,6 +119,10 @@ var Player = new function () {
 	/*
 		Member functions
 	*/
+	var ôkick = function () {
+		kick(this);
+	};
+	
 	var ômenuSelect = function (selectionNumber) {
 		menuSelect(this, selectionNumber);
 	};
@@ -206,6 +211,10 @@ var Player = new function () {
 	/*
 		Private functions
 	*/
+	var kick = function (player) {
+		consumeFood(player);
+	};
+	
 	var menuSelect = function (player, selectionNumber) {
 		switch (player.nextAction) {
 			case ACTION_TYPE.WEAR:
