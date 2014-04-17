@@ -72,10 +72,16 @@ var Log = new function () {
 	
 	var printMessages = function () {
 		var numberOfMessages = _messages.length;
+		var lastTurn;
 		var messageIndex;
+		var color = COLORS.White;
 		
 		if (numberOfMessages > MAX_LINES) {
 			numberOfMessages = MAX_LINES;
+		}
+		
+		if (numberOfMessages > 0) {
+			lastTurn = _messages[_messages.length - numberOfMessages].turn;
 		}
 		
 		for (var i = 0; i < numberOfMessages; i++) {
@@ -85,7 +91,12 @@ var Log = new function () {
 				continue;
 			}
 			
-			printMessage(_messages[messageIndex], i);
+			if (lastTurn != _messages[messageIndex].turn) {
+				color = color === COLORS.White ? COLORS.DarkGray : COLORS.White;
+				lastTurn = _messages[messageIndex].turn;
+			};
+			
+			printMessage(_messages[messageIndex], i, color);
 		}
 	};
 	
@@ -93,8 +104,8 @@ var Log = new function () {
 		_canvas.width = _canvas.width;
 	};
 	
-	var printMessage = function (message,line) {
-		_context.fillStyle = COLORS.White;
+	var printMessage = function (message,line,color) {
+		_context.fillStyle = color;
 		_context.font = "10px Segoe UI";
 		_context.fillText(message.turn + ": " + message.text, 5, LINE_HEIGHT * (line + 1) - LINE_OFFSET);
 	};

@@ -50,7 +50,11 @@ var Items = new function () {
 		AMULET_OF_THE_TITANS:0,
 		COOKIE:1,
 	};
-
+	
+	/*
+		Sounds
+	*/
+	var SOUND_EAT = "includes/sounds/eat1.ogg";
 	
 	/*
 		Item Registry
@@ -86,6 +90,8 @@ var Items = new function () {
 		};
 		var eat = function (player) {
 			player.AddEffect(this.eat_status_effect, 1);
+			sound = new Audio(SOUND_EAT);
+			sound.play();
 		};
 		
 		

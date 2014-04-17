@@ -34,6 +34,11 @@ var Player = new function () {
 		_itemIdCounter = 0;
 	};
 	
+	/*
+		Sounds
+	*/
+	var SOUND_EAT = "includes/sounds/eat1.ogg";
+	
 	
 	/*
 		Enums
