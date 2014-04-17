@@ -43,7 +43,8 @@ var Items = new function () {
 		WEAK:5,
 		FAMISHED:6,
 		STARVING:7,
-		EATING_HALF:8
+		EATING_HALF:8,
+		DEAD:9
 	};
 	
 	var ITEMS = {

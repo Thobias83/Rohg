@@ -137,7 +137,8 @@ var Rohg = new function () {
 		WEAK:5,
 		FAMISHED:6,
 		STARVING:7,
-		EATING_HALF:8
+		EATING_HALF:8,
+		DEAD:9
 	};
 	var ITEMS = {
 		AMULET_OF_THE_TITANS:0,
@@ -163,6 +164,11 @@ var Rohg = new function () {
 	var _statNumberOfRooms;
 	var _statFloor;
 	var _statDiscoveredRooms;
+	
+	/*
+		Control Signals
+	*/
+	var _keysOff;
 
 	/*
 		Public functions
@@ -178,6 +184,8 @@ var Rohg = new function () {
 			return;
 		};
 		
+		_keysOff = true;
+		resetContext();
 		registerEvents();
 		uiInit();
 		populateOptions();
@@ -197,6 +205,67 @@ var Rohg = new function () {
 	/*
 		Private functions
 	*/
+	var restart = function () {
+		resetContext();
+		setContext();
+		Log.Restart();
+		initMap();	
+		initPlayer();
+		drawScreen();
+		doLoadingScreen();
+		doWelcomeMessage();
+	};
+	
+	var resetContext = function () {
+		_mainCanvas = undefined;
+		_mainContext = undefined;
+		_statsCanvas = undefined;
+		_statsContext = undefined;
+		_screenTimer = undefined;
+		_screenTick = 0;
+		_player = {};
+		_map = [];
+		_shroudedMap = [];
+		_rooms = [];
+		_seed = undefined;
+		_roomIndex = []
+		_doorIndex = []; // {roomIndex, doorIndex}
+		_canSeeIndex = [];
+		_statNumberOfRooms = undefined;
+		_statFloor = undefined;
+		_statDiscoveredRooms = undefined;
+	};
+	
+	var endGame = function () {
+		endGameShroud();
+		
+		setTimeout(function () {
+			restart();
+		}, 5000);
+	};
+	
+	var flashScreenRed = function () {
+		var counterStart = 5;
+		var counter = counterStart;
+		var timer;
+		var opacity;
+		
+		timer = setInterval(function () {
+			if (counter < 0) {
+				window.clearInterval(timer);
+				return;
+			}
+			drawScreen();
+			
+			opacity = counter / counterStart;
+			
+			_mainContext.fillStyle = "rgba(255,0,0," + opacity + ")"; //Red
+			_mainContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+			
+			counter--;
+		}, 1000/FPS);
+	};
+	
 	var doWelcomeMessage = function () {
 		_player.Log("You awaken in a strange place.");
 	};
@@ -225,15 +294,42 @@ var Rohg = new function () {
 		_mainContext.fillText("Rohg",(CANVAS_WIDTH-500)/2,(CANVAS_HEIGHT+100)/2);
 	};
 	
+	var endGameShroud = function () {
+		var counterStart = 0;
+		var counterEnd = 150;
+		var counter = counterStart;
+		var timer;
+		var opacity, color;
+		
+		_keysOff = true;
+		timer = setInterval(function () {
+			if (counter >= counterEnd) {
+				window.clearInterval(timer);
+				return;
+			}
+			
+			drawScreen();
+			
+			opacity = counter / counterEnd;
+			
+			showLoadingScreen(opacity);
+			
+			counter++;
+			
+		}, 1000/FPS);
+	};
+	
 	var fadeLoadingScreen = function () {
 		var counterStart = 90;
 		var counter = counterStart;
 		var timer;
 		var opacity, color;
 		
+		_keysOff = true;
 		timer = setInterval(function () {
-			if (counter <= 0) {
+			if (counter < 0) {
 				window.clearInterval(timer);
+				_keysOff = false;
 				return;
 			}
 			
@@ -251,6 +347,12 @@ var Rohg = new function () {
 	var registerEvents = function () {
 		document.addEventListener("turn", function (event) {
 			drawScreen();
+		}, false);
+		document.addEventListener("damage", function (event) {
+			flashScreenRed();
+		}, false);
+		document.addEventListener("endGame", function (event) {
+			endGame();
 		}, false);
 	};
 	
@@ -542,7 +644,7 @@ var Rohg = new function () {
 	var initPlayer = function () {
 		
 		// x,y,str,agi,intel,lightRadius,currentHealth,currentMana,maxFood
-		_player = Player.Init(Math.floor(MAP_TILE_WIDTH / 2), Math.floor(MAP_TILE_HEIGHT / 2), 10, 10, 10, 1, 10, 10, 100);
+		_player = Player.Init(Math.floor(MAP_TILE_WIDTH / 2), Math.floor(MAP_TILE_HEIGHT / 2), 10, 10, 10, 1, 20, 20, 100);
 
 		resetStats();
 		buildShroudedMap();
@@ -611,6 +713,10 @@ var Rohg = new function () {
 	var keyDown = function (event) {
 		var keyPressed = event.keyCode;
 		var shiftKey = event.shiftKey;
+		
+		if (_keysOff) {
+			return;
+		}
 		
 		if (shiftKey ==1) {
 			shiftKey = true;

@@ -27,8 +27,8 @@ var Player = new function () {
 	var _itemIdCounter;
 	// Resetter
 	var resetGlobals = function () {
-		MAX_HEALTH_MULTIPLIER = 2
-		MAX_MANA_MULTIPLIER = 2
+		MAX_HEALTH_MULTIPLIER = 2;
+		MAX_MANA_MULTIPLIER = 2;
 		ARMOR_MULT = 2;
 		_effectIdCounter = 0;
 		_itemIdCounter = 0;
@@ -38,6 +38,7 @@ var Player = new function () {
 		Sounds
 	*/
 	var SOUND_EAT = "includes/sounds/eat1.ogg";
+	var SOUND_DAMAGE = "includes/sounds/ouch1.ogg";
 	
 	
 	/*
@@ -67,7 +68,8 @@ var Player = new function () {
 		WEAK:5,
 		FAMISHED:6,
 		STARVING:7,
-		EATING_HALF:8
+		EATING_HALF:8,
+		DEAD:9
 	};
 	var ITEM_TYPE = {
 		WEARABLE:0,
@@ -76,6 +78,17 @@ var Player = new function () {
 		READABLE:3,
 		EATABLE:4,
 		PASSIVE:5
+	};
+	var SOURCE_TYPE = {
+		SELF:0,
+		ITEM:1,
+		ENEMY:2,
+		ENVIRONMENT:3
+	};
+	var DAMAGE_TYPE = {
+		PHYSICAL:0,
+		FIRE:1,
+		POISON:2
 	};
 	
 	
@@ -87,7 +100,7 @@ var Player = new function () {
 		resetGlobals();
 		
 		return {
-			inventory:getNewInv(),
+			name:"Elbereth",
 			x:x,
 			y:y,
 			str:str,
@@ -96,6 +109,7 @@ var Player = new function () {
 			lightRadius:lightRadius,
 			effects:[],
 			items:[],
+			damage:[],
 			currentHealth:currentHealth,
 			currentMana:currentMana,
 			maxFood:maxFood,
@@ -107,6 +121,7 @@ var Player = new function () {
 			Kick:ôkick,
 			MenuSelect:ômenuSelect,
 			AddItem:ôaddItem,
+			AddDamage:ôaddDamage,
 			RemoveItem:ôremoveItem,
 			WearItem:ôwearItem,
 			TakeOffItem:ôtakeOffItem,
@@ -142,6 +157,10 @@ var Player = new function () {
 	
 	var ôaddItem = function (item) {
 		return addItem(this, item);
+	};
+	
+	var ôaddDamage = function (amount, type, sourceType, sourceName, message) {
+		return addDamage(this, amount, type, sourceType, sourceName, message);
 	};
 	
 	var ôremoveItem = function (itemIndex) {
@@ -216,6 +235,11 @@ var Player = new function () {
 	/*
 		Private functions
 	*/
+	var killPlayer = function (player) {
+		player.AddEffect(EFFECTS.DEAD, -1);
+		document.dispatchEvent(new Event("endGame"));
+	};
+	
 	var kick = function (player) {
 		consumeFood(player);
 	};
@@ -242,6 +266,7 @@ var Player = new function () {
 				continue;
 			}
 			
+			player.effects[i].Turn(player);
 			player.effects[i].duration--;
 			
 			if (player.effects[i].duration === 0) {
@@ -278,6 +303,60 @@ var Player = new function () {
 	var isStarving = function (player) {
 		return getEffectIdsByType(player, EFFECTS.STARVING).length > 0;
 	};
+	
+	var evaluateDamage = function (player) {
+		var damageDone = 0;
+		
+		for (var i = 0, len = player.damage.length; i < len; i++) {
+			damageDone += takeDamage(player, i);
+		}
+		
+		player.damage = [];
+		
+		if (damageDone > 0) {
+			document.dispatchEvent(new Event("damage"));
+			sound = new Audio(SOUND_DAMAGE);
+			sound.play();
+		}
+	};
+	
+	var takeDamage = function (player, damageIndex) {
+		var damageDone = 0;
+		var damageType, sourceName;
+		
+		// Could evaluate resistances here, if they existed
+		
+		damageType = getDamageTypeName(player.damage[damageIndex].type);
+		sourceName = player.damage[damageIndex].sourceName;
+		damageDone = player.damage[damageIndex].amount;
+		player.currentHealth = player.currentHealth - damageDone;
+		player.Log("You take "+damageDone+" "+damageType+" damage from "+sourceName+".");
+		
+		return damageDone;
+	};
+	
+	var getDamageTypeName = function (damageType) {
+		switch (damageType) {
+			case DAMAGE_TYPE.PHYSICAL:
+				return "physical";
+			case DAMAGE_TYPE.FIRE:
+				return "fire";
+			case DAMAGE_TYPE.POISON:
+				return "poison";
+			default:
+				return "<unknown damage type>";
+		}
+	};
+	
+	var addDamage = function (player, amount, type, sourceType, sourceName, message) {
+		player.damage.push({
+			amount: amount,
+			type: type,
+			sourceType: sourceType,
+			sourceName: sourceName,
+			message: message
+		});
+	};	
 	
 	var addItem = function (player, item) {
 		player.items[_itemIdCounter] = item;
@@ -502,11 +581,16 @@ var Player = new function () {
 			consumeFood(player);
 		}
 		decrementEffects(player);
+		evaluateDamage(player);
 		player.turn++;
 		player.nextAction = ACTION_TYPE.MOVE;
 		
 		// This function triggers a browser-wide event so other namespaces can take action on the turn
 		document.dispatchEvent(new Event("turn"));
+		
+		if (player.currentHealth <= 0) {
+			killPlayer(player);
+		}
 	};
 	
 	var resetHunger = function (player) {

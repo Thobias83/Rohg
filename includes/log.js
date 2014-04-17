@@ -49,6 +49,11 @@ var Log = new function () {
 		refreshDisplay();
 	};
 	
+	this.Restart = function () {
+		refreshDisplay();
+		_messages = [];
+	};
+	
 	this.AddMessage = function (text,turn) {
 		_messages[_messages.length] = {text:text,turn:turn};
 		refreshDisplay();
